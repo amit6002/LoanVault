@@ -37,34 +37,40 @@ async function request(endpoint, options = {}) {
     }
 
     let data = null;
+    let rawText = '';
     const contentType = response.headers.get('content-type') || '';
 
-    if (contentType.includes('application/json')) {
+    if (contentType.includes('json')) {
       try {
         data = await response.json();
       } catch (e) {
         data = null;
       }
-    } else {
-      const text = await response.text();
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        if (!response.ok) {
-          throw new Error(`Server error (${response.status}): ${response.statusText || 'Unexpected response'}`);
+    }
+
+    if (data === null) {
+      rawText = await response.text().catch(() => '');
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {
+          data = null;
         }
-        data = text;
       }
     }
 
     if (!response.ok) {
-      const message = (data && typeof data === 'object' && data.message)
-        ? data.message
-        : `Server error (${response.status}): ${response.statusText || 'Unable to complete request'}`;
-      throw new Error(message);
+      if (data && typeof data === 'object' && data.message) {
+        throw new Error(data.message);
+      }
+      if (rawText && !rawText.trim().startsWith('<')) {
+        throw new Error(rawText.trim());
+      }
+      const statusText = response.statusText ? ` ${response.statusText}` : '';
+      throw new Error(`Server error (${response.status})${statusText}`);
     }
 
-    return data;
+    return data !== null ? data : rawText;
   } catch (error) {
     console.error(`API Error [${endpoint}]:`, error);
     throw error;
