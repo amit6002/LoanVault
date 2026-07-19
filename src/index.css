@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+@layer base {
+  html, body {
+    background-color: #020617; /* slate-950 */
+    color: #f1f5f9; /* slate-100 */
+    margin: 0;
+    padding: 0;
+    overscroll-behavior: none; /* Turns off elastic scrolling bounce */
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  /* Custom slim scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0f172a; /* slate-900 */
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #334155; /* slate-700 */
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #475569; /* slate-600 */
+  }
+
+  /* Focus ring improvements */
+  :focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+
+  /* Code element styling */
+  code {
+    font-family: 'Fira Code', 'Consolas', 'Courier New', monospace;
+    font-size: 0.85em;
+  }
+}

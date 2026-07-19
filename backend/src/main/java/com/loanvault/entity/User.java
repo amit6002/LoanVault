@@ -1,0 +1,112 @@
+package com.loanvault.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * ============================================================
+ * USER ENTITY
+ * Represents all system users across 4 roles: BORROWER, OFFICER,
+ * MANAGER, ADMIN. Supports both password-based and Google OAuth2
+ * login via the authProvider field.
+ * ============================================================
+ */
+@Entity
+@Table(name = "users",
+    uniqueConstraints = @UniqueConstraint(columnNames = "email"))
+@Getter @Setter @Builder
+@NoArgsConstructor @AllArgsConstructor
+public class User implements UserDetails {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    // Nullable — Google OAuth2 users don't have a password
+    @Column
+    private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
+    // "LOCAL" = email+password, "GOOGLE" = OAuth2 login
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private AuthProvider authProvider = AuthProvider.LOCAL;
+
+    // Google's unique user ID (for OAuth2 users)
+    @Column
+    private String googleId;
+
+    // Branch the borrower selected during registration
+    @Column
+    private String branch;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean enabled = true;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean kycVerified = false;
+
+    @Column(nullable = false, updatable = false)
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column
+    private LocalDateTime lastLoginAt;
+
+    // ============================================================
+    // Spring Security UserDetails implementation
+    // ============================================================
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() { return true; }
+
+    @Override
+    public boolean isAccountNonLocked() { return enabled; }
+
+    @Override
+    public boolean isCredentialsNonExpired() { return true; }
+
+    @Override
+    public boolean isEnabled() { return enabled; }
+
+    // ============================================================
+    // Enum definitions
+    // ============================================================
+
+    public enum Role {
+        BORROWER, OFFICER, MANAGER, ADMIN
+    }
+
+    public enum AuthProvider {
+        LOCAL, GOOGLE
+    }
+}

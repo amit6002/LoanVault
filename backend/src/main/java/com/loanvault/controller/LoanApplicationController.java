@@ -1,0 +1,217 @@
+package com.loanvault.controller;
+
+import com.loanvault.dto.response.ApiResponse;
+import com.loanvault.entity.LoanApplication;
+import com.loanvault.entity.User;
+import com.loanvault.repository.LoanApplicationRepository;
+import com.loanvault.repository.UserRepository;
+import com.loanvault.service.AuditService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+/**
+ * ============================================================
+ * LOAN APPLICATION CONTROLLER
+ * Handles the full loan application lifecycle.
+ *
+ * Borrower:
+ *   POST /api/applications          → Submit new application
+ *   GET  /api/applications/my       → Get own applications
+ *
+ * Officer:
+ *   GET  /api/applications/queue    → Get pending verification queue
+ *   PUT  /api/applications/{id}/recommend → Forward recommendation
+ *
+ * Manager:
+ *   GET  /api/applications/approval-queue → Officer-recommended cases
+ *   PUT  /api/applications/{id}/approve   → Approve & sanction
+ *   PUT  /api/applications/{id}/reject    → Reject application
+ * ============================================================
+ */
+@RestController
+@RequestMapping("/api/applications")
+@RequiredArgsConstructor
+public class LoanApplicationController {
+
+    private final LoanApplicationRepository applicationRepository;
+    private final UserRepository userRepository;
+    private final AuditService auditService;
+
+    // ===================== BORROWER ENDPOINTS =====================
+
+    /**
+     * Submit a new loan application (Borrower only).
+     */
+    @PostMapping
+    @PreAuthorize("hasRole('BORROWER')")
+    public ResponseEntity<ApiResponse> submitApplication(
+        @RequestBody Map<String, Object> payload,
+        @AuthenticationPrincipal User currentUser
+    ) {
+        // Generate reference ID: APP-YYYY-XXXXX
+        String refId = "APP-" + LocalDateTime.now().getYear() + "-"
+            + String.format("%05d", new Random().nextInt(99999));
+
+        LoanApplication application = LoanApplication.builder()
+            .referenceId(refId)
+            .borrower(currentUser)
+            .loanType((String) payload.get("loanType"))
+            .loanAmount(new BigDecimal(payload.get("loanAmount").toString()))
+            .tenureMonths(Integer.parseInt(payload.get("tenureMonths").toString()))
+            .interestRate(new BigDecimal(payload.get("interestRate").toString()))
+            .fullName((String) payload.get("fullName"))
+            .panNumber((String) payload.get("panNumber"))
+            .employmentType((String) payload.get("employmentType"))
+            .employerName((String) payload.get("employerName"))
+            .monthlyIncome(payload.get("monthlyIncome") != null ?
+                new BigDecimal(payload.get("monthlyIncome").toString()) : null)
+            .status(LoanApplication.Status.SUBMITTED)
+            .build();
+
+        applicationRepository.save(application);
+
+        auditService.log(currentUser.getEmail(), "LOAN_APPLICATION_SUBMITTED",
+            "LoanApplication", refId, "New " + application.getLoanType() + " loan application");
+
+        return ResponseEntity.ok(ApiResponse.success(
+            "Application submitted successfully!", Map.of("referenceId", refId)
+        ));
+    }
+
+    /**
+     * Get the current borrower's applications.
+     */
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('BORROWER')")
+    public ResponseEntity<List<LoanApplication>> getMyApplications(
+        @AuthenticationPrincipal User currentUser
+    ) {
+        return ResponseEntity.ok(
+            applicationRepository.findByBorrowerOrderByAppliedAtDesc(currentUser)
+        );
+    }
+
+    // ===================== OFFICER ENDPOINTS =====================
+
+    /**
+     * Officer: Get all applications pending document verification.
+     */
+    @GetMapping("/queue")
+    @PreAuthorize("hasRole('OFFICER')")
+    public ResponseEntity<List<LoanApplication>> getVerificationQueue() {
+        List<LoanApplication.Status> pendingStatuses = List.of(
+            LoanApplication.Status.SUBMITTED,
+            LoanApplication.Status.DOC_VERIFICATION,
+            LoanApplication.Status.CREDIT_CHECK
+        );
+        return ResponseEntity.ok(
+            applicationRepository.findByStatusInOrderByAppliedAtAsc(pendingStatuses)
+        );
+    }
+
+    /**
+     * Officer: Forward recommendation (approve or reject) to manager.
+     */
+    @PutMapping("/{id}/recommend")
+    @PreAuthorize("hasRole('OFFICER')")
+    public ResponseEntity<ApiResponse> recommend(
+        @PathVariable Long id,
+        @RequestBody Map<String, String> payload,
+        @AuthenticationPrincipal User officer
+    ) {
+        LoanApplication app = applicationRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Application not found"));
+
+        String recommendation = payload.get("recommendation"); // "APPROVE" or "REJECT"
+        String remarks = payload.get("remarks");
+
+        app.setAssignedOfficer(officer);
+        app.setOfficerRemarks(remarks);
+        app.setStatus("APPROVE".equals(recommendation)
+            ? LoanApplication.Status.RECOMMENDED_APPROVE
+            : LoanApplication.Status.RECOMMENDED_REJECT
+        );
+
+        applicationRepository.save(app);
+
+        auditService.log(officer.getEmail(), "OFFICER_RECOMMENDATION",
+            "LoanApplication", app.getReferenceId(),
+            "Officer " + recommendation + " recommendation: " + remarks);
+
+        return ResponseEntity.ok(ApiResponse.success("Recommendation submitted successfully."));
+    }
+
+    // ===================== MANAGER ENDPOINTS =====================
+
+    /**
+     * Manager: Get all officer-recommended applications awaiting final sanction.
+     */
+    @GetMapping("/approval-queue")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<List<LoanApplication>> getApprovalQueue() {
+        return ResponseEntity.ok(
+            applicationRepository.findByStatusOrderByAppliedAtAsc(
+                LoanApplication.Status.RECOMMENDED_APPROVE
+            )
+        );
+    }
+
+    /**
+     * Manager: Approve and sanction a loan.
+     */
+    @PutMapping("/{id}/approve")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<ApiResponse> approve(
+        @PathVariable Long id,
+        @RequestBody Map<String, String> payload,
+        @AuthenticationPrincipal User manager
+    ) {
+        LoanApplication app = applicationRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Application not found"));
+
+        app.setStatus(LoanApplication.Status.DISBURSEMENT_PENDING);
+        app.setManagerRemarks(payload.get("remarks"));
+        app.setSanctionedAt(LocalDateTime.now());
+        applicationRepository.save(app);
+
+        auditService.log(manager.getEmail(), "LOAN_APPROVED",
+            "LoanApplication", app.getReferenceId(), "Loan sanctioned by manager");
+
+        return ResponseEntity.ok(ApiResponse.success(
+            "Loan approved! Application moved to Disbursement Pending."
+        ));
+    }
+
+    /**
+     * Manager: Reject a loan application.
+     */
+    @PutMapping("/{id}/reject")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<ApiResponse> reject(
+        @PathVariable Long id,
+        @RequestBody Map<String, String> payload,
+        @AuthenticationPrincipal User manager
+    ) {
+        LoanApplication app = applicationRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Application not found"));
+
+        app.setStatus(LoanApplication.Status.REJECTED);
+        app.setManagerRemarks(payload.get("remarks"));
+        applicationRepository.save(app);
+
+        auditService.log(manager.getEmail(), "LOAN_REJECTED",
+            "LoanApplication", app.getReferenceId(), "Loan rejected by manager");
+
+        return ResponseEntity.ok(ApiResponse.success("Application rejected."));
+    }
+}
