@@ -72,6 +72,19 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles 404 static resource or unmapped endpoint errors cleanly.
+     */
+    @ExceptionHandler({
+        org.springframework.web.servlet.resource.NoResourceFoundException.class,
+        org.springframework.web.servlet.NoHandlerFoundException.class
+    })
+    public ResponseEntity<ApiResponse> handleNotFoundException(Exception ex) {
+        log.warn("Resource not found: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(ApiResponse.error("Requested endpoint or resource not found: " + ex.getMessage()));
+    }
+
+    /**
      * Catch-all for unexpected errors.
      */
     @ExceptionHandler(Exception.class)

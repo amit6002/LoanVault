@@ -36,10 +36,32 @@ async function request(endpoint, options = {}) {
       throw new Error('Session expired. Please log in again.');
     }
 
-    const data = await response.json();
+    let data = null;
+    const contentType = response.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+      try {
+        data = await response.json();
+      } catch (e) {
+        data = null;
+      }
+    } else {
+      const text = await response.text();
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        if (!response.ok) {
+          throw new Error(`Server error (${response.status}): ${response.statusText || 'Unexpected response'}`);
+        }
+        data = text;
+      }
+    }
 
     if (!response.ok) {
-      throw new Error(data.message || 'An error occurred while communicating with the server.');
+      const message = (data && typeof data === 'object' && data.message)
+        ? data.message
+        : `Server error (${response.status}): ${response.statusText || 'Unable to complete request'}`;
+      throw new Error(message);
     }
 
     return data;
