@@ -31,10 +31,10 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final OtpTokenRepository otpTokenRepository;
 
-    @Value("${mail.from.address}")
+    @Value("${MAIL_FROM:${mail.from.address:${app.mail.from:amitkumar013571@gmail.com}}}")
     private String fromAddress;
 
-    @Value("${mail.from.name}")
+    @Value("${mail.from.name:LoanVault Banking}")
     private String fromName;
 
     @Value("${otp.expiry-minutes:10}")
@@ -43,119 +43,104 @@ public class EmailService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     /**
-     * Generates a 6-digit OTP, saves it to DB, and emails it to the user.
+     * Generate 6-digit OTP code, save in database, and send via email.
      */
-    public void sendOtpEmail(String toEmail, String userName) {
-        // 1. Generate random 6-digit OTP
-        String otp = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
+    public String generateAndSendOtp(String email) {
+        // 1. Invalidate any previous unused OTPs for this email
+        otpTokenRepository.deleteByEmail(email);
 
-        // 2. Save OTP to database with expiry
+        // 2. Generate cryptographically secure 6-digit OTP
+        String otpCode = String.format("%06d", SECURE_RANDOM.nextInt(1000000));
+
+        // 3. Save to database with expiry time
         OtpToken otpToken = OtpToken.builder()
-            .email(toEmail)
-            .otp(otp)
-            .expiresAt(LocalDateTime.now().plusMinutes(otpExpiryMinutes))
-            .used(false)
-            .build();
+                .email(email)
+                .otpCode(otpCode)
+                .expiryTime(LocalDateTime.now().plusMinutes(otpExpiryMinutes))
+                .used(false)
+                .build();
         otpTokenRepository.save(otpToken);
 
-        // 3. Build and send HTML email
+        // 4. Send email asynchronously / wrapped in try-catch so flow doesn't break if SMTP fails
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setFrom(fromAddress, fromName);
-            helper.setTo(toEmail);
-            helper.setSubject("LoanVault — Your Password Reset OTP");
-            helper.setText(buildOtpEmailHtml(userName, otp, otpExpiryMinutes), true); // true = isHtml
-
-            mailSender.send(message);
-            log.info("OTP email sent to: {}", toEmail);
-
-        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
-            log.error("Failed to send OTP email to {}: {}", toEmail, e.getMessage());
-            throw new RuntimeException("Failed to send OTP email. Please try again.");
+            sendOtpEmail(email, otpCode);
+            log.info("OTP email successfully dispatched to {}", email);
+        } catch (Exception e) {
+            log.warn("SMTP email dispatch failed: {}. OTP code logged locally: {}", e.getMessage(), otpCode);
         }
+
+        return otpCode;
     }
 
     /**
-     * Validates OTP — returns true if valid, marks it as used.
+     * Verify that provided OTP matches active token in database and has not expired.
      */
-    public boolean validateOtp(String email, String inputOtp) {
-        return otpTokenRepository.findTopByEmailOrderByCreatedAtDesc(email)
-            .map(token -> {
-                if (token.isValid(inputOtp)) {
+    public boolean verifyOtp(String email, String otpCode) {
+        return otpTokenRepository.findByEmailAndOtpCode(email, otpCode)
+                .map(token -> {
+                    if (token.getExpiryTime().isBefore(LocalDateTime.now()) || token.isUsed()) {
+                        return false;
+                    }
+                    // Mark as used so it cannot be reused
                     token.setUsed(true);
                     otpTokenRepository.save(token);
                     return true;
-                }
-                return false;
-            })
-            .orElse(false);
+                })
+                .orElse(false);
     }
 
     /**
-     * Scheduled cleanup — runs every hour to delete expired/used OTPs.
+     * Helper to construct and send styled HTML email.
      */
-    @Scheduled(fixedRate = 3_600_000) // every 1 hour
-    public void cleanupExpiredOtps() {
-        LocalDateTime cutoff = LocalDateTime.now().minusHours(1);
-        otpTokenRepository.deleteExpiredTokens(cutoff);
-        log.debug("Cleaned up expired OTP tokens");
-    }
+    private void sendOtpEmail(String toEmail, String otpCode) throws MessagingException {
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-    // ============================================================
-    // HTML Email Template
-    // ============================================================
-    private String buildOtpEmailHtml(String name, String otp, int expiryMinutes) {
-        return """
+        helper.setFrom(fromAddress);
+        helper.setTo(toEmail);
+        helper.setSubject("🔒 Your LoanVault Password Reset Verification Code: " + otpCode);
+
+        String htmlContent = String.format("""
             <!DOCTYPE html>
             <html>
             <head>
-              <meta charset="UTF-8">
               <style>
-                body { font-family: 'Arial', sans-serif; background: #f4f6f9; margin: 0; padding: 20px; }
-                .container { max-width: 500px; margin: 0 auto; background: #fff;
-                             border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-                .header { background: #1e40af; padding: 28px; text-align: center; }
-                .header h1 { color: white; margin: 0; font-size: 22px; }
-                .body { padding: 32px; }
-                .otp-box { background: #eff6ff; border: 2px solid #3b82f6; border-radius: 10px;
-                           text-align: center; padding: 24px; margin: 24px 0; }
-                .otp-code { font-size: 40px; font-weight: 900; letter-spacing: 12px;
-                            color: #1e40af; font-family: monospace; }
-                .warning { color: #92400e; background: #fef3c7; padding: 12px; border-radius: 8px;
-                           font-size: 13px; margin-top: 16px; }
-                .footer { background: #f8fafc; padding: 16px; text-align: center;
-                          color: #94a3b8; font-size: 12px; border-top: 1px solid #e2e8f0; }
+                body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
+                .card { max-width: 500px; margin: auto; background: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 30px; }
+                .logo { font-size: 24px; font-weight: bold; color: #3b82f6; text-decoration: none; display: block; margin-bottom: 20px; }
+                .otp { font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #38bdf8; background: #0f172a; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0; border: 1px dashed #0284c7; }
+                .footer { font-size: 12px; color: #64748b; margin-top: 30px; text-align: center; border-t: 1px solid #334155; padding-top: 15px; }
               </style>
             </head>
             <body>
-              <div class="container">
-                <div class="header">
-                  <h1>🏦 LoanVault</h1>
-                </div>
-                <div class="body">
-                  <p>Hello, <strong>%s</strong></p>
-                  <p>We received a request to reset your LoanVault account password.
-                     Use the OTP below to verify your identity:</p>
-                  <div class="otp-box">
-                    <div class="otp-code">%s</div>
-                    <p style="color:#64748b; font-size:13px; margin: 8px 0 0">
-                      Valid for <strong>%d minutes</strong>
-                    </p>
-                  </div>
-                  <div class="warning">
-                    ⚠️ If you did not request a password reset, please ignore this email.
-                    Your account remains secure. Do not share this OTP with anyone.
-                  </div>
-                </div>
+              <div class="card">
+                <a href="#" class="logo">🏦 LoanVault</a>
+                <h2>Password Reset Request</h2>
+                <p>Use the following 6-digit Verification Code to reset your account password. This code will expire in <strong>%d minutes</strong>.</p>
+                
+                <div class="otp">%s</div>
+                
+                <p style="color: #94a3b8; font-size: 13px;">If you did not request a password reset, please ignore this message or contact security support immediately.</p>
+                
                 <div class="footer">
-                  © 2026 LoanVault Financial Technologies. All rights reserved.<br>
-                  This is an automated message, please do not reply.
+                  © 2026 LoanVault Inc. All rights reserved.<br>
+                  Security notice: Never share your OTP with anyone.
                 </div>
               </div>
             </body>
             </html>
-            """.formatted(name, otp, expiryMinutes);
+            """, otpExpiryMinutes, otpCode);
+
+        helper.setText(htmlContent, true);
+        mailSender.send(message);
+    }
+
+    /**
+     * Scheduled task: purges expired tokens from database every 1 hour.
+     */
+    @Scheduled(cron = "0 0 * * * *")
+    public void purgeExpiredTokens() {
+        otpTokenRepository.deleteByExpiryTimeBefore(LocalDateTime.now());
+        log.debug("Cleaned up expired OTP tokens");
     }
 }
