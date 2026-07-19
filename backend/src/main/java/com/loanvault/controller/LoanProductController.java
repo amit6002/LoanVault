@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,91 +24,85 @@ public class LoanProductController {
     @GetMapping
     public ResponseEntity<List<Map<String, Object>>> getLoanProducts() {
         List<Map<String, Object>> products = List.of(
-            Map.of(
-                "id", "PROD-PERSONAL",
-                "type", "PERSONAL",
-                "name", "Personal Flexi Loan",
-                "minAmount", new BigDecimal("50000"),
-                "maxAmount", new BigDecimal("1500000"),
-                "minTenure", 12,
-                "maxTenure", 60,
-                "interestRate", 10.5,
-                "processingFeePercent", 1.5,
-                "requiredDocs", List.of("ID_PROOF", "INCOME_PROOF", "BANK_STATEMENT"),
-                "description", "Unsecured personal loan for urgent financial needs, medical emergencies, or travel.",
-                "popular", true
+            createProduct(
+                "PROD-PERSONAL", "PERSONAL", "Personal Flexi Loan",
+                new BigDecimal("50000"), new BigDecimal("1500000"),
+                12, 60, 10.5, 1.5,
+                List.of("ID_PROOF", "INCOME_PROOF", "BANK_STATEMENT"),
+                "Unsecured personal loan for urgent financial needs, medical emergencies, or travel.",
+                true
             ),
-            Map.of(
-                "id", "PROD-HOME",
-                "type", "HOME",
-                "name", "Home Prime Loan",
-                "minAmount", new BigDecimal("500000"),
-                "maxAmount", new BigDecimal("10000000"),
-                "minTenure", 60,
-                "maxTenure", 360,
-                "interestRate", 8.4,
-                "processingFeePercent", 0.5,
-                "requiredDocs", List.of("ID_PROOF", "ADDRESS_PROOF", "INCOME_PROOF", "BANK_STATEMENT", "PROPERTY_DOCS"),
-                "description", "Long-term housing finance for home purchase, construction, or plot acquisition.",
-                "popular", true
+            createProduct(
+                "PROD-HOME", "HOME", "Home Prime Loan",
+                new BigDecimal("500000"), new BigDecimal("10000000"),
+                60, 360, 8.4, 0.5,
+                List.of("ID_PROOF", "ADDRESS_PROOF", "INCOME_PROOF", "BANK_STATEMENT", "PROPERTY_DOCS"),
+                "Long-term housing finance for home purchase, construction, or plot acquisition.",
+                true
             ),
-            Map.of(
-                "id", "PROD-VEHICLE",
-                "type", "VEHICLE",
-                "name", "Auto Drive Loan",
-                "minAmount", new BigDecimal("100000"),
-                "maxAmount", new BigDecimal("5000000"),
-                "minTenure", 12,
-                "maxTenure", 84,
-                "interestRate", 9.2,
-                "processingFeePercent", 1.0,
-                "requiredDocs", List.of("ID_PROOF", "ADDRESS_PROOF", "INCOME_PROOF", "BANK_STATEMENT"),
-                "description", "Finance your dream car or commercial vehicle with quick approval and low interest.",
-                "popular", false
+            createProduct(
+                "PROD-VEHICLE", "VEHICLE", "Auto Drive Loan",
+                new BigDecimal("100000"), new BigDecimal("5000000"),
+                12, 84, 9.2, 1.0,
+                List.of("ID_PROOF", "ADDRESS_PROOF", "INCOME_PROOF", "BANK_STATEMENT"),
+                "Finance your dream car or commercial vehicle with quick approval and low interest.",
+                false
             ),
-            Map.of(
-                "id", "PROD-BUSINESS",
-                "type", "BUSINESS",
-                "name", "MSME Growth Loan",
-                "minAmount", new BigDecimal("200000"),
-                "maxAmount", new BigDecimal("8000000"),
-                "minTenure", 24,
-                "maxTenure", 120,
-                "interestRate", 12.0,
-                "processingFeePercent", 2.0,
-                "requiredDocs", List.of("ID_PROOF", "ADDRESS_PROOF", "INCOME_PROOF", "BANK_STATEMENT"),
-                "description", "Working capital and equipment financing for registered businesses and MSMEs.",
-                "popular", true
+            createProduct(
+                "PROD-BUSINESS", "BUSINESS", "MSME Growth Loan",
+                new BigDecimal("200000"), new BigDecimal("8000000"),
+                24, 120, 12.0, 2.0,
+                List.of("ID_PROOF", "ADDRESS_PROOF", "INCOME_PROOF", "BANK_STATEMENT"),
+                "Working capital and equipment financing for registered businesses and MSMEs.",
+                true
             ),
-            Map.of(
-                "id", "PROD-EDUCATION",
-                "type", "EDUCATION",
-                "name", "Higher Education Loan",
-                "minAmount", new BigDecimal("200000"),
-                "maxAmount", new BigDecimal("15000000"),
-                "minTenure", 24,
-                "maxTenure", 180,
-                "interestRate", 8.9,
-                "processingFeePercent", 0.75,
-                "requiredDocs", List.of("ID_PROOF", "ADDRESS_PROOF", "INCOME_PROOF", "BANK_STATEMENT"),
-                "description", "Fund domestic and international studies with flexible moratorium period.",
-                "popular", false
+            createProduct(
+                "PROD-EDUCATION", "EDUCATION", "Higher Education Loan",
+                new BigDecimal("200000"), new BigDecimal("15000000"),
+                24, 180, 8.9, 0.75,
+                List.of("ID_PROOF", "ADDRESS_PROOF", "INCOME_PROOF", "BANK_STATEMENT"),
+                "Fund domestic and international studies with flexible moratorium period.",
+                false
             ),
-            Map.of(
-                "id", "PROD-GOLD",
-                "type", "GOLD",
-                "name", "Sovereign Gold Loan",
-                "minAmount", new BigDecimal("25000"),
-                "maxAmount", new BigDecimal("5000000"),
-                "minTenure", 3,
-                "maxTenure", 36,
-                "interestRate", 7.5,
-                "processingFeePercent", 0.25,
-                "requiredDocs", List.of("ID_PROOF", "ADDRESS_PROOF"),
-                "description", "Instant liquidity against gold ornaments with minimal documentation and lowest rates.",
-                "popular", false
+            createProduct(
+                "PROD-GOLD", "GOLD", "Sovereign Gold Loan",
+                new BigDecimal("25000"), new BigDecimal("5000000"),
+                3, 36, 7.5, 0.25,
+                List.of("ID_PROOF", "ADDRESS_PROOF"),
+                "Instant liquidity against gold ornaments with minimal documentation and lowest rates.",
+                false
             )
         );
         return ResponseEntity.ok(products);
+    }
+
+    private Map<String, Object> createProduct(
+        String id,
+        String type,
+        String name,
+        BigDecimal minAmount,
+        BigDecimal maxAmount,
+        int minTenure,
+        int maxTenure,
+        double interestRate,
+        double processingFeePercent,
+        List<String> requiredDocs,
+        String description,
+        boolean popular
+    ) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", id);
+        map.put("type", type);
+        map.put("name", name);
+        map.put("minAmount", minAmount);
+        map.put("maxAmount", maxAmount);
+        map.put("minTenure", minTenure);
+        map.put("maxTenure", maxTenure);
+        map.put("interestRate", interestRate);
+        map.put("processingFeePercent", processingFeePercent);
+        map.put("requiredDocs", requiredDocs);
+        map.put("description", description);
+        map.put("popular", popular);
+        return map;
     }
 }
