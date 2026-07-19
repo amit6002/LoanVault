@@ -43,13 +43,33 @@ public class AuthController {
     }
 
     /**
-     * Email + password login.
+     * Email + password login (POST).
      * Returns JWT token with user info embedded.
      */
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(@Valid @RequestBody LoginRequest request) {
         JwtResponse response = authService.login(request);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Friendly info for GET requests to /api/auth/login (prevents 405 errors).
+     */
+    @GetMapping("/login")
+    public ResponseEntity<ApiResponse> loginGetInfo() {
+        return ResponseEntity.ok(ApiResponse.success(
+            "Auth Login REST API is active. Please send an HTTP POST request with JSON payload: { \"email\": \"...\", \"password\": \"...\" }."
+        ));
+    }
+
+    /**
+     * Friendly info for GET requests to /api/auth/register (prevents 405 errors).
+     */
+    @GetMapping("/register")
+    public ResponseEntity<ApiResponse> registerGetInfo() {
+        return ResponseEntity.ok(ApiResponse.success(
+            "Auth Register REST API is active. Please send an HTTP POST request with JSON payload to create a account."
+        ));
     }
 
     /**
