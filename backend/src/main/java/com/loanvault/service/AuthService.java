@@ -9,9 +9,6 @@ import com.loanvault.repository.UserRepository;
 import com.loanvault.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +29,6 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
     private final AuditService auditService;
 
@@ -63,9 +59,13 @@ public class AuthService {
         // Generate JWT
         String token = jwtService.generateToken(savedUser, savedUser.getRole().name());
 
-        // Log the event
-        auditService.log(savedUser.getEmail(), "REGISTER", "User", savedUser.getId().toString(),
-            "New borrower account registered");
+        // Log the event safely
+        try {
+            auditService.log(savedUser.getEmail(), "REGISTER", "User", savedUser.getId().toString(),
+                "New borrower account registered");
+        } catch (Exception e) {
+            log.warn("Audit logging failed on register: {}", e.getMessage());
+        }
 
         log.info("New borrower registered: {}", savedUser.getEmail());
 
@@ -77,12 +77,16 @@ public class AuthService {
      */
     @Transactional
     public JwtResponse login(LoginRequest request) {
-        // Spring Security's AuthenticationManager validates credentials
-        Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
+        User user = userRepository.findByEmail(request.getEmail())
+            .orElseThrow(() -> new RuntimeException("Invalid email or password."));
 
-        User user = (User) authentication.getPrincipal();
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Invalid email or password.");
+        }
+
+        if (!user.isEnabled()) {
+            throw new RuntimeException("Account is disabled. Please contact system admin.");
+        }
 
         // Update last login timestamp
         user.setLastLoginAt(LocalDateTime.now());
@@ -91,9 +95,13 @@ public class AuthService {
         // Generate JWT
         String token = jwtService.generateToken(user, user.getRole().name());
 
-        // Log login event
-        auditService.log(user.getEmail(), "LOGIN", "User", user.getId().toString(),
-            "User logged in via email/password");
+        // Log login event safely
+        try {
+            auditService.log(user.getEmail(), "LOGIN", "User", user.getId().toString(),
+                "User logged in via email/password");
+        } catch (Exception e) {
+            log.warn("Audit logging failed on login: {}", e.getMessage());
+        }
 
         log.info("User logged in: {} (role: {})", user.getEmail(), user.getRole());
 
@@ -103,7 +111,7 @@ public class AuthService {
     /**
      * Initiate forgot password flow — sends OTP to user's email.
      */
-    public void forgotPassword(String email) {
+    public void initiateForgotPassword(String email) {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new RuntimeException("No account found with this email address."));
 
@@ -115,6 +123,13 @@ public class AuthService {
 
         emailService.sendOtpEmail(email, user.getName());
         log.info("OTP sent to: {}", email);
+    }
+
+    /**
+     * Alias method for forgot password.
+     */
+    public void forgotPassword(String email) {
+        initiateForgotPassword(email);
     }
 
     /**
@@ -140,15 +155,19 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
-        auditService.log(user.getEmail(), "PASSWORD_RESET", "User",
-            user.getId().toString(), "Password reset via OTP");
+        try {
+            auditService.log(user.getEmail(), "RESET_PASSWORD", "User", user.getId().toString(),
+                "Password reset successfully via OTP verification");
+        } catch (Exception e) {
+            log.warn("Audit logging failed on reset password: {}", e.getMessage());
+        }
 
-        log.info("Password reset for: {}", user.getEmail());
+        log.info("Password reset successfully for: {}", user.getEmail());
     }
 
-    // ============================================================
-    // Helper
-    // ============================================================
+    /**
+     * Helper to construct JwtResponse DTO.
+     */
     private JwtResponse buildJwtResponse(String token, User user) {
         return JwtResponse.builder()
             .token(token)
