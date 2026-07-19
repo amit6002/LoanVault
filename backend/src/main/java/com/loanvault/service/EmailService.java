@@ -11,6 +11,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -43,25 +44,23 @@ public class EmailService {
     /**
      * Generate 6-digit OTP code, save in database, and send via email.
      */
-    public String generateAndSendOtp(String email) {
-        // 1. Invalidate any previous unused OTPs for this email
-        otpTokenRepository.deleteByEmail(email);
-
-        // 2. Generate cryptographically secure 6-digit OTP
+    @Transactional
+    public String sendOtpEmail(String email, String name) {
+        // 1. Generate cryptographically secure 6-digit OTP
         String otpCode = String.format("%06d", SECURE_RANDOM.nextInt(1000000));
 
-        // 3. Save to database with expiry time
+        // 2. Save to database with expiry time
         OtpToken otpToken = OtpToken.builder()
                 .email(email)
-                .otpCode(otpCode)
-                .expiryTime(LocalDateTime.now().plusMinutes(otpExpiryMinutes))
+                .otp(otpCode)
+                .expiresAt(LocalDateTime.now().plusMinutes(otpExpiryMinutes))
                 .used(false)
                 .build();
         otpTokenRepository.save(otpToken);
 
-        // 4. Send email asynchronously / wrapped in try-catch so flow doesn't break if SMTP fails
+        // 3. Send email asynchronously / wrapped in try-catch so flow doesn't break if SMTP fails
         try {
-            sendOtpEmail(email, otpCode);
+            dispatchHtmlEmail(email, otpCode);
             log.info("OTP email successfully dispatched to {}", email);
         } catch (Exception e) {
             log.warn("SMTP email dispatch failed: {}. OTP code logged locally: {}", e.getMessage(), otpCode);
@@ -71,26 +70,39 @@ public class EmailService {
     }
 
     /**
-     * Verify that provided OTP matches active token in database and has not expired.
+     * Validates that provided OTP matches the active token in database and has not expired.
      */
-    public boolean verifyOtp(String email, String otpCode) {
-        return otpTokenRepository.findByEmailAndOtpCode(email, otpCode)
+    @Transactional
+    public boolean validateOtp(String email, String inputOtp) {
+        if (email == null || inputOtp == null) return false;
+
+        return otpTokenRepository.findTopByEmailOrderByCreatedAtDesc(email)
                 .map(token -> {
-                    if (token.getExpiryTime().isBefore(LocalDateTime.now()) || token.isUsed()) {
+                    if (token.isExpired() || token.isUsed()) {
                         return false;
                     }
-                    // Mark as used so it cannot be reused
-                    token.setUsed(true);
-                    otpTokenRepository.save(token);
-                    return true;
+                    if (token.getOtp().trim().equals(inputOtp.trim())) {
+                        token.setUsed(true);
+                        otpTokenRepository.save(token);
+                        return true;
+                    }
+                    return false;
                 })
                 .orElse(false);
     }
 
     /**
+     * Alias method for verifying OTP.
+     */
+    @Transactional
+    public boolean verifyOtp(String email, String inputOtp) {
+        return validateOtp(email, inputOtp);
+    }
+
+    /**
      * Helper to construct and send styled HTML email.
      */
-    private void sendOtpEmail(String toEmail, String otpCode) throws MessagingException {
+    private void dispatchHtmlEmail(String toEmail, String otpCode) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
@@ -138,7 +150,7 @@ public class EmailService {
      */
     @Scheduled(cron = "0 0 * * * *")
     public void purgeExpiredTokens() {
-        otpTokenRepository.deleteByExpiryTimeBefore(LocalDateTime.now());
+        otpTokenRepository.deleteExpiredTokens(LocalDateTime.now());
         log.debug("Cleaned up expired OTP tokens");
     }
 }
