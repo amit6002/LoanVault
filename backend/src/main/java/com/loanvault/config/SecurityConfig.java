@@ -34,7 +34,7 @@ import java.util.List;
  *  - Stateless JWT session management
  *  - Public vs protected route rules
  *  - Google OAuth2 login flow
- *  - CORS for React frontend
+ *  - Dynamic CORS allowing Vercel and Localhost
  *  - BCrypt password encoding
  *  - Role-based access (@PreAuthorize)
  * ============================================================
@@ -49,7 +49,7 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
-    @Value("${app.frontend-url}")
+    @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
     /**
@@ -120,15 +120,19 @@ public class SecurityConfig {
     }
 
     /**
-     * CORS configuration — allows React frontend to call our API.
-     * In production, replace localhost:5173 with your Vercel URL.
+     * CORS configuration — allows Vercel deployment URLs and localhost.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Allow frontend origin
-        config.setAllowedOrigins(List.of(frontendUrl, "http://localhost:5173"));
+        // Allow Vercel origins, custom frontend URL, and local dev
+        config.setAllowedOriginPatterns(List.of(
+            "https://*.vercel.app",
+            "http://localhost:5173",
+            "http://localhost:3000",
+            frontendUrl
+        ));
 
         // Allow common HTTP methods
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
@@ -147,31 +151,21 @@ public class SecurityConfig {
         return source;
     }
 
-    /**
-     * Authentication provider that uses our DB + BCrypt password encoder.
-     */
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder());
-        return provider;
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
     }
 
-    /**
-     * BCrypt password encoder — industry standard.
-     * Strength 10 = ~100ms per hash, good security vs performance trade-off.
-     */
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(10);
-    }
-
-    /**
-     * Authentication manager — used by AuthController.login() to authenticate.
-     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }
