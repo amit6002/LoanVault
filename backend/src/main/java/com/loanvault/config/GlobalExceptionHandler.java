@@ -85,6 +85,16 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles 405 Method Not Allowed errors (e.g. GET instead of POST).
+     */
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse> handleMethodNotSupported(org.springframework.web.HttpRequestMethodNotSupportedException ex) {
+        log.warn("Method not supported: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+            .body(ApiResponse.error("HTTP method '" + ex.getMethod() + "' is not allowed for this endpoint."));
+    }
+
+    /**
      * Catch-all for unexpected errors.
      */
     @ExceptionHandler(Exception.class)
