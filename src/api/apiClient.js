@@ -6,13 +6,18 @@
  * ============================================================
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://loanvault-production.up.railway.app';
+const rawEnv = (import.meta.env.VITE_API_URL || '').trim();
+const API_BASE_URL = (rawEnv && rawEnv.startsWith('http'))
+  ? rawEnv.replace(/\/+$/, '')
+  : 'https://loanvault-production.up.railway.app';
 
 /**
  * Core fetch helper function
  */
 async function request(endpoint, options = {}) {
   const token = localStorage.getItem('lms_token');
+  const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const targetUrl = `${API_BASE_URL}${path}`;
 
   const headers = {
     'Content-Type': 'application/json',
@@ -26,7 +31,7 @@ async function request(endpoint, options = {}) {
   };
 
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    const response = await fetch(targetUrl, config);
     
     // Handle 401 Unauthorized globally (token expired / invalid)
     if (response.status === 401 && !endpoint.includes('/api/auth/')) {
@@ -67,7 +72,7 @@ async function request(endpoint, options = {}) {
         throw new Error(rawText.trim());
       }
       const statusText = response.statusText ? ` ${response.statusText}` : '';
-      throw new Error(`Server error (${response.status})${statusText}`);
+      throw new Error(`Server error (${response.status})${statusText} on ${targetUrl}`);
     }
 
     return data !== null ? data : rawText;
