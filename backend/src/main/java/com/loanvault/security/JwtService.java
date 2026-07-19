@@ -25,11 +25,10 @@ import java.util.function.Function;
 @Slf4j
 public class JwtService {
 
-    @Value("${jwt.secret:${app.jwt.secret:c3VwZXItc2VjcmV0LWp3dC1rZXktZm9yLWxvYW52YXVsdC1iYWNrZW5kLXByb2R1Y3Rpb24tZGVwbG95bWVudC1rZXktc3RyaW5nLTUxMi1iaXRz}}")
+    @Value("${JWT_SECRET:c3VwZXItc2VjcmV0LWp3dC1rZXktZm9yLWxvYW52YXVsdC1iYWNrZW5kLXByb2R1Y3Rpb24tZGVwbG95bWVudC1rZXktc3RyaW5nLTUxMi1iaXRz}")
     private String secretKey;
 
-    @Value("${jwt.expiration-ms:${app.jwt.expiration-ms:86400000}}")
-    private long jwtExpirationMs;
+    private final long jwtExpirationMs = 86400000;
 
     /**
      * Generate JWT token for a user with their role embedded as a claim.

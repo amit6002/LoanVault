@@ -31,14 +31,12 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private final OtpTokenRepository otpTokenRepository;
 
-    @Value("${MAIL_FROM:${mail.from.address:${app.mail.from:amitkumar013571@gmail.com}}}")
+    @Value("${MAIL_FROM:amitkumar013571@gmail.com}")
     private String fromAddress;
 
-    @Value("${mail.from.name:LoanVault Banking}")
-    private String fromName;
+    private final String fromName = "LoanVault Banking";
 
-    @Value("${otp.expiry-minutes:10}")
-    private int otpExpiryMinutes;
+    private final int otpExpiryMinutes = 10;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
