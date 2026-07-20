@@ -23,6 +23,7 @@ export default function MyLoansPage() {
   const [activeTab, setActiveTab] = useState('LN-APP-2026-05327');
   const [detailTab, setDetailTab] = useState('Overview');
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const [paymentMsg, setPaymentMsg] = useState('');
 
   useEffect(() => {
@@ -49,10 +50,12 @@ export default function MyLoansPage() {
     setTimeout(() => setPaymentMsg(''), 5000);
   };
 
-  const filteredLoans = loans.filter(l =>
-    l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    l.id.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredLoans = loans.filter(l => {
+    const matchesSearch = l.name.toLowerCase().includes(searchQuery.toLowerCase()) || l.id.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+    if (statusFilter === 'ACTIVE') return l.status === 'ACTIVE';
+    return true;
+  });
 
   const selectedLoan = loans.find(l => l.id === activeTab) || loans[0];
   const loanTxns = selectedLoan ? transactions.filter(t => t.loanId === selectedLoan.id) : [];
@@ -101,7 +104,11 @@ export default function MyLoansPage() {
                 className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
               />
             </div>
-            <select className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-blue-500"
+            >
               <option value="ALL">All Loans</option>
               <option value="ACTIVE">Active Loans</option>
             </select>
