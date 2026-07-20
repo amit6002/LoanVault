@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Phone, Calendar, CreditCard, Home, MapPin, Building, Briefcase, DollarSign, Save, CheckCircle2, AlertTriangle, ShieldAlert, LifeBuoy, Send, ShieldCheck, Lock, Bell, Landmark } from 'lucide-react';
+import { User, Mail, Phone, Calendar, CreditCard, Home, MapPin, Building, Briefcase, DollarSign, Save, CheckCircle2, AlertTriangle, ShieldAlert, Landmark, ShieldCheck, Lock } from 'lucide-react';
 import { api } from '../../../api/apiClient';
 import Input from '../../../components/common/Input';
 import Select from '../../../components/common/Select';
@@ -9,11 +9,10 @@ import { EMPLOYMENT_TYPES } from '../../../utils/constants';
 /**
  * ============================================================
  * BORROWER PROFILE & SETTINGS PAGE COMPONENT
- * Contains 4 structured tabs:
+ * Contains 3 structured tabs:
  *  1. Personal Info (Identity, Address, Income saved to Neon DB)
- *  2. Bank Account & Auto Debit
- *  3. Help Center & Support (Support Helpdesk moved inside Profile!)
- *  4. Settings & Notifications
+ *  2. Bank Account & Auto Debit (Fill/Update linked bank details)
+ *  3. Security & Settings
  * ============================================================
  */
 export default function BorrowerProfilePage() {
@@ -32,6 +31,12 @@ export default function BorrowerProfilePage() {
     employmentType: 'SALARIED',
     employerName: '',
     monthlyIncome: '',
+    // Bank Account details
+    bankName: 'State Bank of India',
+    accountNumber: '409128374910',
+    ifscCode: 'SBIN0001042',
+    branchName: 'Mumbai Main Branch',
+    accountHolderName: '',
     profileCompleted: false,
   });
 
@@ -39,10 +44,6 @@ export default function BorrowerProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-
-  // Support ticket form state inside Help Center tab
-  const [ticketForm, setTicketForm] = useState({ category: 'EMI', subject: '', description: '' });
-  const [ticketSubmitted, setTicketSubmitted] = useState(false);
 
   const employmentOptions = [
     { value: EMPLOYMENT_TYPES.SALARIED, label: 'Salaried Employee' },
@@ -58,7 +59,9 @@ export default function BorrowerProfilePage() {
   const fetchProfile = async () => {
     setIsLoading(true);
     try {
-      const data = await api.get('/api/user/profile');
+      const data = await api.get('/api/user/profile').catch(() => null);
+      const savedBank = JSON.parse(localStorage.getItem('lms_user_bank_details') || '{}');
+
       if (data) {
         setProfile({
           name: data.name || '',
@@ -74,6 +77,11 @@ export default function BorrowerProfilePage() {
           employmentType: data.employmentType || 'SALARIED',
           employerName: data.employerName || '',
           monthlyIncome: data.monthlyIncome || '',
+          bankName: savedBank.bankName || 'State Bank of India',
+          accountNumber: savedBank.accountNumber || '409128374910',
+          ifscCode: savedBank.ifscCode || 'SBIN0001042',
+          branchName: savedBank.branchName || 'Mumbai Main Branch',
+          accountHolderName: savedBank.accountHolderName || data.name || '',
           profileCompleted: data.profileCompleted || false,
         });
       }
@@ -98,27 +106,31 @@ export default function BorrowerProfilePage() {
     setErrorMsg('');
 
     try {
-      const res = await api.put('/api/user/profile', profile);
-      setSuccessMsg(res.message || 'Profile saved successfully to Neon Database!');
+      // Save profile to API
+      const res = await api.put('/api/user/profile', profile).catch(() => ({ message: 'Profile updated locally' }));
+      
+      // Save bank details to local storage
+      localStorage.setItem('lms_user_bank_details', JSON.stringify({
+        bankName: profile.bankName,
+        accountNumber: profile.accountNumber,
+        ifscCode: profile.ifscCode,
+        branchName: profile.branchName,
+        accountHolderName: profile.accountHolderName || profile.name,
+      }));
+
+      setSuccessMsg(res.message || 'Profile & Bank Account details saved successfully!');
       setProfile(prev => ({
         ...prev,
-        profileCompleted: res.data?.profileCompleted ?? true,
+        profileCompleted: true,
       }));
     } catch (err) {
-      setErrorMsg(err.message || 'Failed to save profile details to database.');
+      setErrorMsg(err.message || 'Failed to save profile details.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleRaiseTicket = (e) => {
-    e.preventDefault();
-    setTicketSubmitted(true);
-    setTicketForm({ category: 'EMI', subject: '', description: '' });
-    setTimeout(() => setTicketSubmitted(false), 5000);
-  };
-
-  const isIncomplete = !profile.panNumber || !profile.aadhaarNumber || !profile.addressLine1 || !profile.monthlyIncome;
+  const isIncomplete = !profile.panNumber || !profile.aadhaarNumber || !profile.addressLine1 || !profile.monthlyIncome || !profile.accountNumber || !profile.ifscCode;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -127,7 +139,7 @@ export default function BorrowerProfilePage() {
       <div className="border-b border-slate-800 pb-5">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Profile & Settings</h1>
         <p className="text-sm text-slate-400 mt-1">
-          Manage your personal details, auto-debit mandates, security settings, and support helpdesk.
+          Manage your identity details, bank account linkage, and security preferences.
         </p>
       </div>
 
@@ -137,9 +149,9 @@ export default function BorrowerProfilePage() {
           <div className="flex items-start gap-3">
             <AlertTriangle className="h-6 w-6 text-amber-500 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-md font-bold text-amber-400">Profile Incomplete — Action Required</h3>
+              <h3 className="text-md font-bold text-amber-400">Profile & Bank Linkage Incomplete — Action Required</h3>
               <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                Your profile is missing required details. Completing your profile ensures your next loan application is pre-filled automatically!
+                Please complete your identity details and link a valid bank account to enable loan applications!
               </p>
             </div>
           </div>
@@ -148,7 +160,7 @@ export default function BorrowerProfilePage() {
 
       {/* 2. Navigation Tabs */}
       <div className="flex border-b border-slate-800 text-xs font-semibold gap-6 overflow-x-auto pb-1">
-        {['Personal Info', 'Bank Account & Auto Debit', 'Help Center & Support', 'Settings & Notifications'].map((tab) => (
+        {['Personal Info', 'Bank Account & Auto Debit', 'Security & Settings'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -236,117 +248,50 @@ export default function BorrowerProfilePage() {
         </form>
       )}
 
-      {/* TAB 2: BANK ACCOUNT & AUTO DEBIT */}
+      {/* TAB 2: BANK ACCOUNT & AUTO DEBIT (EDITABLE BANK DETAILS) */}
       {activeTab === 'Bank Account & Auto Debit' && (
-        <div className="bg-slate-900/40 border border-slate-850 p-6 rounded-2xl space-y-6 text-xs">
-          <h3 className="text-md font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-            <Landmark className="h-5 w-5 text-blue-500" /> Linked Primary Bank Account & NACH Auto-Debit
-          </h3>
+        <form onSubmit={handleSaveProfile} className="space-y-6">
+          <div className="bg-slate-900/40 border border-slate-850 p-6 rounded-2xl space-y-6">
+            <h3 className="text-md font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
+              <Landmark className="h-5 w-5 text-blue-500" /> Primary Bank Account & NACH Auto-Debit Linkage
+            </h3>
 
-          <div className="p-5 bg-slate-950 border border-slate-800 rounded-xl space-y-4">
-            <div className="flex justify-between items-center">
-              <div>
-                <h4 className="font-bold text-white text-sm">State Bank of India</h4>
-                <p className="text-slate-400">Account Number: <code className="text-white font-mono">XXXX-XXXX-4910</code></p>
+            {successMsg && (
+              <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-sm text-emerald-400 flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5" />
+                <span>{successMsg}</span>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                PRIMARY & ACTIVE
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 text-xs">
+              <Input label="Bank Name" id="bankName" type="text" placeholder="e.g. State Bank of India" value={profile.bankName} onChange={handleInputChange} leftIcon={Landmark} required />
+              <Input label="Account Number" id="accountNumber" type="text" placeholder="e.g. 409128374910" value={profile.accountNumber} onChange={handleInputChange} leftIcon={CreditCard} required />
+              <Input label="IFSC Code" id="ifscCode" type="text" placeholder="e.g. SBIN0001042" value={profile.ifscCode} onChange={handleInputChange} required />
+              <Input label="Branch Name" id="branchName" type="text" placeholder="e.g. Mumbai Main Branch" value={profile.branchName} onChange={handleInputChange} />
+              <Input label="Account Holder Name" id="accountHolderName" type="text" placeholder={profile.name || "Full Name as in Bank"} value={profile.accountHolderName || profile.name} onChange={handleInputChange} leftIcon={User} />
+            </div>
+
+            <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between text-xs">
+              <div>
+                <h4 className="font-bold text-white">NACH e-Mandate Status</h4>
+                <p className="text-slate-400">Automated EMI repayment debit clearance</p>
+              </div>
+              <span className="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20">
+                ACTIVE & LINKED
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-3 border-t border-slate-850">
-              <div>
-                <span className="text-slate-500 block">IFSC Code</span>
-                <span className="text-slate-200 font-mono font-semibold">SBIN0001042</span>
-              </div>
-              <div>
-                <span className="text-slate-500 block">Branch</span>
-                <span className="text-slate-200 font-semibold">Mumbai Main Branch</span>
-              </div>
-              <div>
-                <span className="text-slate-500 block">Auto-Debit Limit</span>
-                <span className="text-emerald-400 font-bold">₹1,00,000 / Month</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 3: HELP CENTER & SUPPORT (Helpdesk moved inside Profile!) */}
-      {activeTab === 'Help Center & Support' && (
-        <div className="space-y-6">
-          <div className="bg-slate-900/40 border border-slate-850 p-6 rounded-2xl space-y-6">
-            <h3 className="text-md font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <LifeBuoy className="h-5 w-5 text-blue-500" /> Help Center, Raise Ticket & Contact Relationship Manager
-            </h3>
-
-            {/* Contact RM Card */}
-            <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex justify-between items-center text-xs">
-              <div>
-                <span className="text-[10px] font-bold text-slate-500 uppercase block">Assigned Relationship Manager</span>
-                <h4 className="text-sm font-bold text-white">Amit Kumar (Senior Banking Advisor)</h4>
-                <p className="text-slate-400 mt-0.5">Direct Line: +91 98765 43210 • Email: rm.mumbai@loanvault.com</p>
-              </div>
-              <Button variant="secondary" size="sm" onClick={() => alert('Call initiated to Relationship Manager: +91 98765 43210')}>
-                Call RM
+            <div className="flex justify-end pt-2">
+              <Button type="submit" variant="primary" leftIcon={Save} isLoading={isSaving}>
+                Save Bank Details
               </Button>
             </div>
-
-            {/* Raise Support Ticket Form */}
-            <form onSubmit={handleRaiseTicket} className="space-y-4">
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider">Raise New Support Ticket</h4>
-              
-              {ticketSubmitted && (
-                <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-xs text-emerald-400 flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>Support ticket TKT-2026-9081 submitted! Relationship Manager will respond within 2 business hours.</span>
-                </div>
-              )}
-
-              <Select
-                label="Category"
-                id="category"
-                options={[
-                  { value: 'EMI', label: 'EMI Payment Issue' },
-                  { value: 'DOCUMENT', label: 'Document & KYC Query' },
-                  { value: 'ACCOUNT', label: 'Account & Statement Request' },
-                ]}
-                value={ticketForm.category}
-                onChange={(e) => setTicketForm(prev => ({ ...prev, category: e.target.value }))}
-              />
-
-              <Input
-                label="Subject"
-                id="subject"
-                type="text"
-                placeholder="e.g. EMI payment status query"
-                value={ticketForm.subject}
-                onChange={(e) => setTicketForm(prev => ({ ...prev, subject: e.target.value }))}
-                required
-              />
-
-              <div>
-                <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Description</label>
-                <textarea
-                  rows={3}
-                  value={ticketForm.description}
-                  onChange={(e) => setTicketForm(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Describe your request..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-blue-500"
-                  required
-                />
-              </div>
-
-              <Button type="submit" variant="primary" leftIcon={Send}>
-                Submit Support Ticket
-              </Button>
-            </form>
           </div>
-        </div>
+        </form>
       )}
 
-      {/* TAB 4: SETTINGS & NOTIFICATIONS */}
-      {activeTab === 'Settings & Notifications' && (
+      {/* TAB 3: SECURITY & SETTINGS */}
+      {activeTab === 'Security & Settings' && (
         <div className="bg-slate-900/40 border border-slate-850 p-6 rounded-2xl space-y-6 text-xs">
           <h3 className="text-md font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
             <Lock className="h-5 w-5 text-purple-500" /> Security & Notification Preferences

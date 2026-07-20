@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Landmark, ArrowRight, ArrowLeft, CheckCircle, FileText, UploadCloud, Trash2 } from 'lucide-react';
+import { Landmark, ArrowRight, ArrowLeft, CheckCircle, FileText, UploadCloud, Trash2, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { PATHS, LIMITS, LOAN_TYPES, DOCUMENT_TYPE_LABELS } from '../../../utils/constants';
 import { MOCK_LOAN_PRODUCTS } from '../../../data/mockLoans';
 import { formatCurrency } from '../../../utils/formatters';
@@ -14,13 +14,13 @@ import { api } from '../../../api/apiClient';
  * ============================================================
  * LOAN APPLICATION PAGE (7-STEP WIZARD)
  * Handles sequential multi-page form controls, calculates
- * real-time EMI summaries, simulates PDF document uploads,
- * and saves records directly to localStorage.
+ * real-time EMI summaries, enforces profile & bank linkage prerequisites.
  * ============================================================
  */
 export default function LoanApplicationPage() {
   const [step, setStep] = useState(1);
   const [isProfileLoaded, setIsProfileLoaded] = useState(false);
+  const [isIncompletePrerequisite, setIsIncompletePrerequisite] = useState(false);
   const [formData, setFormData] = useState({
     productType: '',
     amount: 100000,
@@ -39,14 +39,23 @@ export default function LoanApplicationPage() {
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
-  // Fetch saved user profile from Neon Cloud DB on mount to pre-fill form
+  // Fetch saved user profile from Neon Cloud DB on mount to pre-fill form and check prerequisites
   useEffect(() => {
     fetchSavedProfile();
   }, []);
 
   const fetchSavedProfile = async () => {
     try {
-      const profile = await api.get('/api/user/profile');
+      const profile = await api.get('/api/user/profile').catch(() => null);
+      const savedBank = JSON.parse(localStorage.getItem('lms_user_bank_details') || '{}');
+
+      const isProfileIncomplete = !profile || !profile.panNumber || !profile.aadhaarNumber || !profile.monthlyIncome || !profile.addressLine1;
+      const isBankIncomplete = !savedBank || !savedBank.accountNumber || !savedBank.ifscCode;
+
+      if (isProfileIncomplete || isBankIncomplete) {
+        setIsIncompletePrerequisite(true);
+      }
+
       if (profile) {
         setFormData(prev => ({
           ...prev,
@@ -218,7 +227,44 @@ export default function LoanApplicationPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-slate-900/40 border border-slate-900 p-8 rounded-2xl relative">
+    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300 relative">
+      
+      {/* PREREQUISITE INTERCEPTION MODAL */}
+      {isIncompletePrerequisite && (
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-2xl max-w-lg w-full space-y-6 shadow-2xl text-center">
+            <div className="p-4 bg-amber-500/10 text-amber-400 rounded-2xl w-fit mx-auto">
+              <AlertTriangle className="h-10 w-10" />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-xl font-bold text-white">Incomplete Profile & Linked Bank Account</h2>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Before applying for a loan, you must complete your personal identity profile (PAN, Aadhaar, Income) and link a valid primary bank account.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Button
+                variant="secondary"
+                className="w-full justify-center"
+                onClick={() => navigate(PATHS.BORROWER_DASHBOARD)}
+              >
+                Go to Dashboard
+              </Button>
+              <Button
+                variant="primary"
+                className="w-full justify-center bg-blue-600 hover:bg-blue-500"
+                onClick={() => navigate(PATHS.BORROWER_PROFILE)}
+              >
+                Complete Profile & Link Bank Account →
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-slate-900/40 border border-slate-900 p-8 rounded-2xl relative">
       <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-600/10 rounded-full blur-2xl pointer-events-none" />
 
       {/* Stepper Wizard Progress Indicators */}
@@ -535,6 +581,7 @@ export default function LoanApplicationPage() {
         </div>
       )}
 
+      </div>
     </div>
   );
 }
