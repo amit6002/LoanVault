@@ -130,6 +130,23 @@ export default function DashboardLayout() {
           })}
         </nav>
 
+        {/* Need Help Widget Box */}
+        {isSidebarOpen && userRole === ROLES.BORROWER && (
+          <div className="mx-3 mb-3 p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-2">
+            <div className="flex items-center gap-2 text-blue-400">
+              <LifeBuoy className="h-5 w-5" />
+              <span className="text-xs font-bold text-white">Need Help?</span>
+            </div>
+            <p className="text-[11px] text-slate-400">We're here to assist you with your loan.</p>
+            <button
+              onClick={() => navigate(PATHS.BORROWER_PROFILE)}
+              className="w-full mt-1 py-1.5 px-3 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-300 rounded-xl text-xs font-bold transition-all text-center"
+            >
+              Visit Help Center →
+            </button>
+          </div>
+        )}
+
         {/* Sidebar Collapse Toggle Button */}
         <div className="p-4 border-t border-slate-800">
           <Button
