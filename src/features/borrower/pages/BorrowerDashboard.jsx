@@ -4,12 +4,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { PATHS } from '../../../utils/constants';
 import { formatCurrency } from '../../../utils/formatters';
 import { api } from '../../../api/apiClient';
+import { loanStore } from '../../../utils/loanStore';
 import Button from '../../../components/common/Button';
 
 /**
  * ============================================================
  * BORROWER DASHBOARD COMPONENT
  * 1-to-1 visual fidelity matching Image 1 mockup.
+ * Connected dynamically to loanStore for real-time portfolio updates.
  * ============================================================
  */
 export default function BorrowerDashboard() {
@@ -18,45 +20,42 @@ export default function BorrowerDashboard() {
   const borrowerName = session.name || 'Rahul Sharma';
 
   const [userProfile, setUserProfile] = useState(null);
-  const [summary, setSummary] = useState({
-    activeLoansCount: 2,
-    totalSanctioned: 1240800,
-    totalOutstanding: 1240800,
-    monthlyOutflow: 9414.69,
-    totalDisbursed: 2841600,
-    totalRepaid: 1600800,
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  const [loans, setLoans] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [isPaying, setIsPaying] = useState(false);
 
   useEffect(() => {
-    fetchDashboardData();
+    loadDashboardData();
   }, []);
 
-  const fetchDashboardData = async () => {
-    setIsLoading(true);
-    try {
-      const profileRes = await api.get('/api/user/profile').catch(() => null);
-      if (profileRes) {
-        setUserProfile(profileRes);
-      }
-
-      const summaryRes = await api.get('/api/loans/summary').catch(() => null);
-      if (summaryRes) {
-        setSummary(prev => ({
-          ...prev,
-          activeLoansCount: summaryRes.activeLoansCount || 2,
-          totalSanctioned: summaryRes.totalSanctioned || 1240800,
-          totalOutstanding: summaryRes.totalOutstanding || 1240800,
-          monthlyOutflow: summaryRes.monthlyOutflow || 9414.69,
-        }));
-      }
-    } catch (err) {
-      console.warn('Failed to fetch dashboard data:', err);
-    } finally {
-      setIsLoading(false);
+  const loadDashboardData = async () => {
+    const profileRes = await api.get('/api/user/profile').catch(() => null);
+    if (profileRes) {
+      setUserProfile(profileRes);
     }
+
+    const storedLoans = loanStore.getLoans();
+    const storedTxns = loanStore.getTransactions();
+    setLoans(storedLoans);
+    setTransactions(storedTxns);
   };
 
+  const handlePayEmiNow = (loanId) => {
+    setIsPaying(true);
+    setTimeout(() => {
+      const { loans: updatedLoans, txns: updatedTxns } = loanStore.payEmi(loanId);
+      setLoans(updatedLoans);
+      setTransactions(updatedTxns);
+      setIsPaying(false);
+    }, 600);
+  };
+
+  const activeLoans = loans.filter(l => l.status === 'ACTIVE');
+  const totalOutstanding = activeLoans.reduce((acc, l) => acc + l.outstandingPrincipal, 0);
+  const totalDisbursed = loans.reduce((acc, l) => acc + l.sanctionedAmount, 0);
+  const totalRepaid = loans.reduce((acc, l) => acc + (l.paidMonths * l.emiAmount), 0);
+
+  const upcomingEmiLoan = activeLoans.find(l => !l.paidThisMonth) || activeLoans[0];
   const isProfileIncomplete = userProfile && (!userProfile.panNumber || !userProfile.aadhaarNumber || !userProfile.monthlyIncome || !userProfile.addressLine1);
 
   return (
@@ -119,8 +118,8 @@ export default function BorrowerDashboard() {
             </div>
           </div>
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white">₹12,40,800</h2>
-            <p className="text-xs text-slate-500 mt-1">Across 2 active loans</p>
+            <h2 className="text-2xl sm:text-3xl font-black text-white">{formatCurrency(totalOutstanding, false)}</h2>
+            <p className="text-xs text-slate-500 mt-1">Across {activeLoans.length} active loans</p>
           </div>
         </div>
 
@@ -133,8 +132,12 @@ export default function BorrowerDashboard() {
             </div>
           </div>
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-emerald-400">₹9,414.69</h2>
-            <p className="text-xs text-slate-500 mt-1">On 05 Aug 2026</p>
+            <h2 className="text-2xl sm:text-3xl font-black text-emerald-400">
+              {upcomingEmiLoan && !upcomingEmiLoan.paidThisMonth ? formatCurrency(upcomingEmiLoan.emiAmount) : 'PAID ✓'}
+            </h2>
+            <p className="text-xs text-slate-500 mt-1">
+              {upcomingEmiLoan && !upcomingEmiLoan.paidThisMonth ? `On ${upcomingEmiLoan.dueDateLabel}` : 'All EMIs paid for this month'}
+            </p>
           </div>
         </div>
 
@@ -147,7 +150,7 @@ export default function BorrowerDashboard() {
             </div>
           </div>
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white">2</h2>
+            <h2 className="text-2xl sm:text-3xl font-black text-white">{activeLoans.length}</h2>
             <p className="text-xs text-slate-500 mt-1">Total Active Accounts</p>
           </div>
         </div>
@@ -173,13 +176,13 @@ export default function BorrowerDashboard() {
               <path
                 d="M 10 50 A 40 40 0 0 1 90 50"
                 fill="none"
-                stroke="url(#gradientGauge)"
+                stroke="url(#gradientGaugeDashboard)"
                 strokeWidth="10"
                 strokeDasharray="125 125"
                 strokeLinecap="round"
               />
               <defs>
-                <linearGradient id="gradientGauge" x1="0%" y1="0%" x2="100%" y2="0%">
+                <linearGradient id="gradientGaugeDashboard" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="#ef4444" />
                   <stop offset="50%" stopColor="#eab308" />
                   <stop offset="100%" stopColor="#10b981" />
@@ -215,24 +218,20 @@ export default function BorrowerDashboard() {
                 <path className="text-emerald-500" strokeDasharray="16, 100" strokeWidth="3.8" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
               </svg>
               <div className="absolute text-center">
-                <span className="text-[10px] font-extrabold text-white block">₹12,40,800</span>
+                <span className="text-[10px] font-extrabold text-white block">{formatCurrency(totalOutstanding, false)}</span>
                 <span className="text-[9px] font-semibold text-slate-400">Total Outstanding</span>
               </div>
             </div>
 
             <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-2 text-slate-300">
-                  <span className="h-2.5 w-2.5 rounded-full bg-blue-500" /> Business Loan
-                </span>
-                <span className="font-mono text-slate-300 font-bold">₹2,00,000 (16%)</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="flex items-center gap-2 text-slate-300">
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Vehicle Loan
-                </span>
-                <span className="font-mono text-slate-300 font-bold">₹10,40,800 (84%)</span>
-              </div>
+              {activeLoans.map(loan => (
+                <div key={loan.id} className="flex items-center justify-between">
+                  <span className="flex items-center gap-2 text-slate-300">
+                    <span className={`h-2.5 w-2.5 rounded-full ${loan.name.includes('Business') ? 'bg-blue-500' : 'bg-emerald-500'}`} /> {loan.name}
+                  </span>
+                  <span className="font-mono text-slate-300 font-bold">{formatCurrency(loan.outstandingPrincipal, false)}</span>
+                </div>
+              ))}
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800 text-xs">
@@ -242,7 +241,7 @@ export default function BorrowerDashboard() {
                 </div>
                 <div>
                   <span className="text-[9px] text-slate-500 block uppercase font-bold">Total Disbursed</span>
-                  <span className="text-slate-200 font-bold">₹28,41,600</span>
+                  <span className="text-slate-200 font-bold">{formatCurrency(totalDisbursed, false)}</span>
                 </div>
               </div>
 
@@ -252,7 +251,7 @@ export default function BorrowerDashboard() {
                 </div>
                 <div>
                   <span className="text-[9px] text-slate-500 block uppercase font-bold">Total Repaid</span>
-                  <span className="text-slate-200 font-bold">₹16,00,800</span>
+                  <span className="text-slate-200 font-bold">{formatCurrency(totalRepaid, false)}</span>
                 </div>
               </div>
             </div>
@@ -268,34 +267,50 @@ export default function BorrowerDashboard() {
             </Link>
           </div>
 
-          <div className="p-5 bg-slate-950/60 border border-slate-800 rounded-2xl space-y-4 relative">
-            <span className="absolute top-4 right-4 text-[10px] font-bold bg-amber-500 text-slate-950 px-2 py-0.5 rounded">
-              Due Soon
-            </span>
+          {upcomingEmiLoan ? (
+            <div className="p-5 bg-slate-950/60 border border-slate-800 rounded-2xl space-y-4 relative">
+              <span className={`absolute top-4 right-4 text-[10px] font-bold px-2 py-0.5 rounded ${
+                upcomingEmiLoan.paidThisMonth ? 'bg-emerald-500 text-slate-950' : 'bg-amber-500 text-slate-950'
+              }`}>
+                {upcomingEmiLoan.paidThisMonth ? 'PAID' : 'Due Soon'}
+              </span>
 
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-600/20 text-blue-400 rounded-xl">
-                <Landmark className="h-6 w-6" />
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-600/20 text-blue-400 rounded-xl">
+                  <Landmark className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">{upcomingEmiLoan.name}</h3>
+                  <p className="text-xs text-slate-500">Monthly Installment</p>
+                </div>
               </div>
+
               <div>
-                <h3 className="text-sm font-bold text-white">Business Loan</h3>
-                <p className="text-xs text-slate-500">Monthly Installment</p>
+                <p className="text-2xl font-black text-white">{formatCurrency(upcomingEmiLoan.emiAmount)}</p>
+                <p className="text-xs text-slate-400 mt-0.5">Due on {upcomingEmiLoan.dueDateLabel}</p>
               </div>
-            </div>
 
-            <div>
-              <p className="text-2xl font-black text-white">₹9,414.69</p>
-              <p className="text-xs text-slate-400 mt-0.5">Due on 05 Aug 2026</p>
+              {upcomingEmiLoan.paidThisMonth ? (
+                <div className="w-full text-center py-2.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl font-bold text-xs">
+                  ✓ EMI Paid for August 2026
+                </div>
+              ) : (
+                <Button
+                  variant="primary"
+                  className="w-full justify-center bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5"
+                  onClick={() => handlePayEmiNow(upcomingEmiLoan.id)}
+                  isLoading={isPaying}
+                >
+                  Pay EMI Now
+                </Button>
+              )}
             </div>
-
-            <Button
-              variant="primary"
-              className="w-full justify-center bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5"
-              onClick={() => navigate(PATHS.BORROWER_EMI_CALENDAR)}
-            >
-              Pay EMI Now
-            </Button>
-          </div>
+          ) : (
+            <div className="p-6 bg-slate-950/60 border border-slate-800 rounded-2xl text-center space-y-2">
+              <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto" />
+              <p className="text-xs font-bold text-white">All EMIs Paid! 🎉</p>
+            </div>
+          )}
         </div>
 
         {/* Right Widget: Recent Activity List (4 columns) */}
@@ -308,77 +323,22 @@ export default function BorrowerDashboard() {
           </div>
 
           <div className="space-y-4 text-xs">
-            
-            {/* Event 1 */}
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-full mt-0.5">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
+            {transactions.slice(0, 5).map((t) => (
+              <div key={t.id} className="flex items-start justify-between">
+                <div className="flex items-start gap-3">
+                  <div className={`p-1.5 rounded-full mt-0.5 ${t.type === 'DEBIT' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-purple-500/20 text-purple-400'}`}>
+                    {t.type === 'DEBIT' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Coins className="h-3.5 w-3.5" />}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-white">{t.name}</h4>
+                    <p className="text-[10px] text-slate-500">{t.date}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-white">EMI Installment Received</h4>
-                  <p className="text-[10px] text-slate-500">05 Jul 2026</p>
-                </div>
+                <span className={`font-bold font-mono ${t.type === 'DEBIT' ? 'text-emerald-400' : 'text-emerald-400'}`}>
+                  {t.type === 'DEBIT' ? '-' : '+'}{formatCurrency(t.amount)}
+                </span>
               </div>
-              <span className="font-bold text-emerald-400 font-mono">-₹9,414.69</span>
-            </div>
-
-            {/* Event 2 */}
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 bg-blue-500/20 text-blue-400 rounded-full mt-0.5">
-                  <FileText className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-white">Loan Application Submitted</h4>
-                  <p className="text-[10px] text-slate-500">02 Jul 2026</p>
-                </div>
-              </div>
-              <span className="text-[9px] font-bold px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded">SUBMITTED</span>
-            </div>
-
-            {/* Event 3 */}
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 bg-purple-500/20 text-purple-400 rounded-full mt-0.5">
-                  <Upload className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-white">Document Uploaded</h4>
-                  <p className="text-[10px] text-slate-500">01 Jul 2026</p>
-                </div>
-              </div>
-              <span className="text-[9px] font-bold px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded">VERIFIED</span>
-            </div>
-
-            {/* Event 4 */}
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded-full mt-0.5">
-                  <Coins className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-white">Vehicle Loan Disbursed</h4>
-                  <p className="text-[10px] text-slate-500">18 Jun 2026</p>
-                </div>
-              </div>
-              <span className="font-bold text-emerald-400 font-mono">+₹10,40,800</span>
-            </div>
-
-            {/* Event 5 */}
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 bg-teal-500/20 text-teal-400 rounded-full mt-0.5">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-white">Business Loan Approved</h4>
-                  <p className="text-[10px] text-slate-500">20 Jul 2026</p>
-                </div>
-              </div>
-              <span className="text-[9px] font-bold px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded">APPROVED</span>
-            </div>
-
+            ))}
           </div>
         </div>
 

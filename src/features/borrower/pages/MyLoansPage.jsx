@@ -4,13 +4,14 @@ import { Landmark, ArrowRight, Download, CreditCard, ChevronRight, CheckCircle2,
 import { PATHS } from '../../../utils/constants';
 import { formatCurrency } from '../../../utils/formatters';
 import { api } from '../../../api/apiClient';
+import { loanStore } from '../../../utils/loanStore';
 import Button from '../../../components/common/Button';
 
 /**
  * ============================================================
  * MY LOANS PAGE COMPONENT
  * 1-to-1 visual fidelity matching Image 2 mockup.
- * Master-Detail Architecture:
+ * Master-Detail Architecture with Dynamic Loan Store Data Binding:
  *   Left: All Loans cards (Business Loan, Vehicle Loan, Home Loan)
  *   Right: Workspace Details (Overview, EMI Schedule, Transactions, Documents)
  * ============================================================
@@ -18,46 +19,34 @@ import Button from '../../../components/common/Button';
 export default function MyLoansPage() {
   const navigate = useNavigate();
   const [loans, setLoans] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [activeTab, setActiveTab] = useState('LN-APP-2026-05327');
   const [detailTab, setDetailTab] = useState('Overview');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [paymentMsg, setPaymentMsg] = useState('');
 
   useEffect(() => {
-    fetchActiveLoans();
+    loadData();
   }, []);
 
-  const fetchActiveLoans = async () => {
-    setIsLoading(true);
-    try {
-      const data = await api.get('/api/loans/my');
-      const list = (Array.isArray(data) && data.length > 0 ? data : [
-        { id: 'LN-APP-2026-05327', loanType: 'Business', status: 'ACTIVE', sanctionedAmount: 800000, outstandingPrincipal: 200000, interestRate: 12.0, tenureMonths: 24, emisPaid: 12, emiAmount: 9414.69, nextEmiDate: '2026-08-05' },
-        { id: 'LN-APP-2026-27758', loanType: 'Vehicle', status: 'ACTIVE', sanctionedAmount: 1040800, outstandingPrincipal: 1040800, interestRate: 9.25, tenureMonths: 60, emisPaid: 12, emiAmount: 9249.71, nextEmiDate: '2026-08-10' },
-        { id: 'LN-APP-2026-00812', loanType: 'Home', status: 'SUBMITTED', sanctionedAmount: 5500000, outstandingPrincipal: 0, interestRate: 8.4, tenureMonths: 240, emisPaid: 0, emiAmount: 0, nextEmiDate: '-' }
-      ]).map(l => ({
-        id: l.loanAccountNumber || `LN-${l.id}`,
-        name: `${l.loanType || 'Business'} Loan`,
-        status: l.status || 'ACTIVE',
-        sanctioned: l.sanctionedAmount || 0,
-        outstanding: l.outstandingPrincipal || 0,
-        interestRate: l.interestRate || 12.0,
-        tenureMonths: l.tenureMonths || 24,
-        paidMonths: l.emisPaid || 12,
-        nextEmi: l.emiAmount || 9414.69,
-        nextDueDate: l.nextEmiDate && l.nextEmiDate !== '-' ? new Date(l.nextEmiDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '-',
-        progress: l.sanctionedAmount > 0 ? Math.round(((l.sanctionedAmount - l.outstandingPrincipal) / l.sanctionedAmount) * 100) : 32,
-      }));
-
-      setLoans(list);
-      if (list.length > 0) {
-        setActiveTab(list[0].id);
-      }
-    } catch (err) {
-      console.warn('Failed to fetch active loans:', err);
-    } finally {
-      setIsLoading(false);
+  const loadData = () => {
+    const storedLoans = loanStore.getLoans();
+    const storedTxns = loanStore.getTransactions();
+    setLoans(storedLoans);
+    setTransactions(storedTxns);
+    if (storedLoans.length > 0 && !storedLoans.some(l => l.id === activeTab)) {
+      setActiveTab(storedLoans[0].id);
     }
+  };
+
+  const handlePayEmiNow = (loanId) => {
+    const { loans: updatedLoans, txns: updatedTxns } = loanStore.payEmi(loanId);
+    setLoans(updatedLoans);
+    setTransactions(updatedTxns);
+
+    const paidLoan = updatedLoans.find(l => l.id === loanId);
+    setPaymentMsg(`EMI Payment of ${formatCurrency(paidLoan.emiAmount)} for ${paidLoan.name} processed successfully! Balance updated.`);
+    setTimeout(() => setPaymentMsg(''), 5000);
   };
 
   const filteredLoans = loans.filter(l =>
@@ -66,6 +55,7 @@ export default function MyLoansPage() {
   );
 
   const selectedLoan = loans.find(l => l.id === activeTab) || loans[0];
+  const loanTxns = selectedLoan ? transactions.filter(t => t.loanId === selectedLoan.id) : [];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -85,6 +75,13 @@ export default function MyLoansPage() {
           Apply for New Loan
         </Button>
       </div>
+
+      {paymentMsg && (
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-sm text-emerald-400 flex items-center gap-2 animate-in fade-in duration-300">
+          <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+          <span>{paymentMsg}</span>
+        </div>
+      )}
 
       {/* MASTER-DETAIL LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -117,6 +114,9 @@ export default function MyLoansPage() {
           {/* Loan Cards List */}
           {filteredLoans.map(loan => {
             const isSelected = activeTab === loan.id;
+            const progressPct = loan.sanctionedAmount > 0 
+              ? Math.round(((loan.sanctionedAmount - loan.outstandingPrincipal) / loan.sanctionedAmount) * 100) 
+              : 0;
 
             return (
               <div
@@ -151,27 +151,27 @@ export default function MyLoansPage() {
                 <div className="grid grid-cols-3 gap-2 py-2 border-y border-slate-850 text-xs">
                   <div>
                     <span className="text-slate-500 block text-[10px]">Outstanding</span>
-                    <span className="text-white font-bold">{formatCurrency(loan.outstanding, false)}</span>
+                    <span className="text-white font-bold">{formatCurrency(loan.outstandingPrincipal, false)}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-[10px]">Next EMI</span>
-                    <span className="text-white font-bold">{loan.nextEmi > 0 ? formatCurrency(loan.nextEmi) : '-'}</span>
+                    <span className="text-white font-bold">{loan.paidThisMonth ? 'PAID' : loan.emiAmount > 0 ? formatCurrency(loan.emiAmount) : '-'}</span>
                   </div>
                   <div>
                     <span className="text-slate-500 block text-[10px]">Due Date</span>
-                    <span className="text-slate-300">{loan.nextDueDate}</span>
+                    <span className="text-slate-300">{loan.dueDateLabel}</span>
                   </div>
                 </div>
 
                 <div className="space-y-1">
                   <div className="flex justify-between text-[10px] font-semibold text-slate-400">
                     <span>Progress</span>
-                    <span>{loan.progress}%</span>
+                    <span>{progressPct}%</span>
                   </div>
                   <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full ${
                       loan.name.includes('Business') ? 'bg-blue-500' : loan.name.includes('Vehicle') ? 'bg-emerald-500' : 'bg-purple-500'
-                    }`} style={{ width: `${loan.progress}%` }} />
+                    }`} style={{ width: `${progressPct}%` }} />
                   </div>
                 </div>
 
@@ -231,48 +231,57 @@ export default function MyLoansPage() {
                   {/* Top Row: Loan Summary + Outstanding Overview Doughnut */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     
-                    {/* Loan Summary Parameters */}
+                    {/* Loan Summary Parameters - DYNAMICALLY BOUND TO selectedLoan */}
                     <div className="bg-slate-950/60 p-4 border border-slate-850 rounded-2xl space-y-2 text-xs">
                       <h4 className="font-bold text-white border-b border-slate-850 pb-2 mb-3">Loan Summary</h4>
                       <div className="flex justify-between py-1">
                         <span className="text-slate-500">Loan Amount</span>
-                        <span className="text-white font-bold">₹8,00,000</span>
+                        <span className="text-white font-bold">{formatCurrency(selectedLoan.sanctionedAmount, false)}</span>
                       </div>
                       <div className="flex justify-between py-1">
                         <span className="text-slate-500">Outstanding Amount</span>
-                        <span className="text-white font-bold">₹2,00,000</span>
+                        <span className="text-white font-bold">{formatCurrency(selectedLoan.outstandingPrincipal, false)}</span>
                       </div>
                       <div className="flex justify-between py-1">
                         <span className="text-slate-500">Interest Rate</span>
-                        <span className="text-emerald-400 font-bold">12% p.a.</span>
+                        <span className="text-emerald-400 font-bold">{selectedLoan.interestRate}% p.a.</span>
                       </div>
                       <div className="flex justify-between py-1">
                         <span className="text-slate-500">Tenure</span>
-                        <span className="text-slate-300">24 Months</span>
+                        <span className="text-slate-300">{selectedLoan.tenureMonths} Months</span>
                       </div>
                       <div className="flex justify-between py-1">
                         <span className="text-slate-500">EMI Amount</span>
-                        <span className="text-emerald-400 font-bold">₹9,414.69</span>
+                        <span className="text-emerald-400 font-bold">{formatCurrency(selectedLoan.emiAmount)}</span>
                       </div>
                       <div className="flex justify-between py-1">
                         <span className="text-slate-500">EMIs Paid</span>
-                        <span className="text-slate-300 font-bold">12 of 24</span>
+                        <span className="text-slate-300 font-bold">{selectedLoan.paidMonths} of {selectedLoan.tenureMonths}</span>
                       </div>
                       <div className="flex justify-between py-1">
                         <span className="text-slate-500">Next EMI Due</span>
-                        <span className="text-slate-300 font-bold">05 Aug 2026</span>
+                        <span className="text-slate-300 font-bold">{selectedLoan.dueDateLabel}</span>
                       </div>
 
-                      <Button
-                        variant="primary"
-                        className="w-full justify-center mt-3 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2"
-                        onClick={() => navigate(PATHS.BORROWER_EMI_CALENDAR)}
-                      >
-                        Pay EMI Now
-                      </Button>
+                      {/* PAY EMI NOW BUTTON */}
+                      {selectedLoan.status === 'ACTIVE' && (
+                        selectedLoan.paidThisMonth ? (
+                          <div className="w-full text-center mt-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold py-2 rounded-xl text-xs">
+                            ✓ EMI Paid for August 2026
+                          </div>
+                        ) : (
+                          <Button
+                            variant="primary"
+                            className="w-full justify-center mt-3 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2"
+                            onClick={() => handlePayEmiNow(selectedLoan.id)}
+                          >
+                            Pay EMI Now
+                          </Button>
+                        )
+                      )}
                     </div>
 
-                    {/* Outstanding Overview Doughnut */}
+                    {/* Outstanding Overview Doughnut - DYNAMICALLY BOUND TO selectedLoan */}
                     <div className="bg-slate-950/60 p-4 border border-slate-850 rounded-2xl space-y-4 text-xs">
                       <h4 className="font-bold text-white border-b border-slate-850 pb-2">Outstanding Overview</h4>
                       
@@ -283,7 +292,7 @@ export default function MyLoansPage() {
                           <path className="text-emerald-500" strokeDasharray="10, 100" strokeWidth="3.8" strokeLinecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                         </svg>
                         <div className="absolute text-center">
-                          <span className="text-xs font-bold text-white block">₹2,00,000</span>
+                          <span className="text-xs font-bold text-white block">{formatCurrency(selectedLoan.outstandingPrincipal, false)}</span>
                           <span className="text-[9px] text-slate-500">Outstanding</span>
                         </div>
                       </div>
@@ -291,11 +300,11 @@ export default function MyLoansPage() {
                       <div className="space-y-2 text-[11px]">
                         <div className="flex justify-between">
                           <span className="text-slate-400 flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-blue-500" /> Principal Outstanding</span>
-                          <span className="font-bold text-white">₹1,80,000 (90%)</span>
+                          <span className="font-bold text-white">{formatCurrency(selectedLoan.outstandingPrincipal * 0.9, false)} (90%)</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-slate-400 flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Interest Outstanding</span>
-                          <span className="font-bold text-white">₹20,000 (10%)</span>
+                          <span className="font-bold text-white">{formatCurrency(selectedLoan.outstandingPrincipal * 0.1, false)} (10%)</span>
                         </div>
                       </div>
 
@@ -306,13 +315,15 @@ export default function MyLoansPage() {
 
                   </div>
 
-                  {/* Bottom Row: Next EMI Box + Recent Transactions */}
+                  {/* Bottom Row: Next EMI Box + Recent Transactions - DYNAMICALLY BOUND TO selectedLoan */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     
                     {/* Next EMI Card */}
                     <div className="bg-slate-950/60 p-4 border border-slate-850 rounded-2xl space-y-3 text-xs relative">
-                      <span className="absolute top-4 right-4 text-[10px] font-bold bg-amber-500 text-slate-950 px-2 py-0.5 rounded">
-                        DUE SOON
+                      <span className={`absolute top-4 right-4 text-[10px] font-bold px-2 py-0.5 rounded ${
+                        selectedLoan.paidThisMonth ? 'bg-emerald-500 text-slate-950' : 'bg-amber-500 text-slate-950'
+                      }`}>
+                        {selectedLoan.paidThisMonth ? 'PAID' : 'DUE SOON'}
                       </span>
                       <h4 className="font-bold text-white border-b border-slate-850 pb-2">Next EMI</h4>
 
@@ -321,26 +332,26 @@ export default function MyLoansPage() {
                           <Calendar className="h-5 w-5" />
                         </div>
                         <div>
-                          <p className="text-xl font-black text-white">₹9,414.69</p>
+                          <p className="text-xl font-black text-white">{formatCurrency(selectedLoan.emiAmount)}</p>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-4 gap-2 pt-2 border-t border-slate-850 text-[10px]">
                         <div>
                           <span className="text-slate-500 block">Due Date</span>
-                          <span className="text-white font-bold">05 Aug 2026</span>
+                          <span className="text-white font-bold">{selectedLoan.dueDateLabel}</span>
                         </div>
                         <div>
                           <span className="text-slate-500 block">EMI Amount</span>
-                          <span className="text-white font-bold">₹9,414.69</span>
+                          <span className="text-white font-bold">{formatCurrency(selectedLoan.emiAmount)}</span>
                         </div>
                         <div>
                           <span className="text-slate-500 block">Principal</span>
-                          <span className="text-slate-300">₹8,534.10</span>
+                          <span className="text-slate-300">{formatCurrency(selectedLoan.principalComponent)}</span>
                         </div>
                         <div>
                           <span className="text-slate-500 block">Interest</span>
-                          <span className="text-slate-300">₹880.59</span>
+                          <span className="text-slate-300">{formatCurrency(selectedLoan.interestComponent)}</span>
                         </div>
                       </div>
 
@@ -357,44 +368,26 @@ export default function MyLoansPage() {
                       </div>
 
                       <div className="space-y-2.5 text-[11px]">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-emerald-500/20 text-emerald-400 rounded">
-                              <CheckCircle2 className="h-3.5 w-3.5" />
+                        {loanTxns.length === 0 ? (
+                          <p className="text-slate-500 text-[10px]">No transaction history available.</p>
+                        ) : (
+                          loanTxns.map(t => (
+                            <div key={t.id} className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className={`p-1.5 rounded ${t.type === 'DEBIT' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-purple-500/20 text-purple-400'}`}>
+                                  {t.type === 'DEBIT' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Coins className="h-3.5 w-3.5" />}
+                                </div>
+                                <div>
+                                  <p className="font-bold text-white">{t.name}</p>
+                                  <p className="text-[10px] text-slate-500">{t.date}</p>
+                                </div>
+                              </div>
+                              <span className={`font-bold ${t.type === 'DEBIT' ? 'text-emerald-400' : 'text-emerald-400'}`}>
+                                {t.type === 'DEBIT' ? '-' : '+'}{formatCurrency(t.amount)}
+                              </span>
                             </div>
-                            <div>
-                              <p className="font-bold text-white">EMI Payment</p>
-                              <p className="text-[10px] text-slate-500">05 Jul 2026</p>
-                            </div>
-                          </div>
-                          <span className="font-bold text-emerald-400">-₹9,414.69</span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-purple-500/20 text-purple-400 rounded">
-                              <Coins className="h-3.5 w-3.5" />
-                            </div>
-                            <div>
-                              <p className="font-bold text-white">Loan Disbursed</p>
-                              <p className="text-[10px] text-slate-500">20 Jul 2026</p>
-                            </div>
-                          </div>
-                          <span className="font-bold text-emerald-400">+₹8,00,000</span>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-blue-500/20 text-blue-400 rounded">
-                              <FileText className="h-3.5 w-3.5" />
-                            </div>
-                            <div>
-                              <p className="font-bold text-white">Processing Fee</p>
-                              <p className="text-[10px] text-slate-500">18 Jul 2026</p>
-                            </div>
-                          </div>
-                          <span className="font-bold text-slate-400">-₹2,500.00</span>
-                        </div>
+                          ))
+                        )}
                       </div>
 
                     </div>
@@ -420,21 +413,15 @@ export default function MyLoansPage() {
                       <tbody className="divide-y divide-slate-850 bg-slate-950/40 text-slate-300">
                         <tr>
                           <td className="px-3 py-2 font-bold">1</td>
-                          <td className="px-3 py-2">05 Jul 2026</td>
-                          <td className="px-3 py-2 text-right">₹9,414.69</td>
-                          <td className="px-3 py-2 text-center"><span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-bold">Paid</span></td>
-                        </tr>
-                        <tr>
-                          <td className="px-3 py-2 font-bold">2</td>
-                          <td className="px-3 py-2">05 Aug 2026</td>
-                          <td className="px-3 py-2 text-right">₹9,414.69</td>
-                          <td className="px-3 py-2 text-center"><span className="text-[10px] bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded font-bold">Upcoming</span></td>
-                        </tr>
-                        <tr>
-                          <td className="px-3 py-2 font-bold">3</td>
-                          <td className="px-3 py-2">05 Sep 2026</td>
-                          <td className="px-3 py-2 text-right">₹9,414.69</td>
-                          <td className="px-3 py-2 text-center"><span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-bold">Upcoming</span></td>
+                          <td className="px-3 py-2">{selectedLoan.dueDateLabel}</td>
+                          <td className="px-3 py-2 text-right">{formatCurrency(selectedLoan.emiAmount)}</td>
+                          <td className="px-3 py-2 text-center">
+                            <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                              selectedLoan.paidThisMonth ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'
+                            }`}>
+                              {selectedLoan.paidThisMonth ? 'Paid' : 'Upcoming'}
+                            </span>
+                          </td>
                         </tr>
                       </tbody>
                     </table>
@@ -445,13 +432,15 @@ export default function MyLoansPage() {
               {/* TAB 3: TRANSACTIONS */}
               {detailTab === 'Transactions' && (
                 <div className="space-y-3 text-xs">
-                  <div className="p-3.5 bg-slate-950 border border-slate-850 rounded-xl flex justify-between items-center">
-                    <div>
-                      <p className="font-bold text-white">EMI Payment Received</p>
-                      <p className="text-[10px] text-slate-500">Ref: TXN-8012 • 05 Jul 2026</p>
+                  {loanTxns.map(t => (
+                    <div key={t.id} className="p-3.5 bg-slate-950 border border-slate-850 rounded-xl flex justify-between items-center">
+                      <div>
+                        <p className="font-bold text-white">{t.name}</p>
+                        <p className="text-[10px] text-slate-500">Ref: {t.id} • {t.date}</p>
+                      </div>
+                      <span className="font-bold text-emerald-400">{t.type === 'DEBIT' ? '-' : '+'}{formatCurrency(t.amount)}</span>
                     </div>
-                    <span className="font-bold text-emerald-400">-₹9,414.69</span>
-                  </div>
+                  ))}
                 </div>
               )}
 
