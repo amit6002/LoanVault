@@ -15,34 +15,31 @@ import Button from '../../../components/common/Button';
  */
 function getStageProgress(status) {
   if (status === 'REJECTED' || status === 'RECOMMENDED_REJECT') {
-    return { currentStep: 4, isRejected: true, label: 'Application Rejected' };
+    return { currentStep: 3, isRejected: true, label: 'Application Rejected' };
   }
 
   switch (status) {
     case 'SUBMITTED':
-      return { currentStep: 1, isRejected: false, label: 'Stage 1 of 5: Application Submitted' };
+      return { currentStep: 1, isRejected: false, label: 'Stage 1 of 3: Application Submitted' };
     case 'DOC_VERIFICATION':
-      return { currentStep: 2, isRejected: false, label: 'Stage 2 of 5: Document Verification' };
     case 'CREDIT_CHECK':
-      return { currentStep: 3, isRejected: false, label: 'Stage 3 of 5: Credit Score Assessment' };
+      return { currentStep: 2, isRejected: false, label: 'Stage 2 of 3: Officer Verification & CIBIL Check' };
     case 'UNDER_REVIEW':
     case 'RECOMMENDED_APPROVE':
-      return { currentStep: 4, isRejected: false, label: 'Stage 4 of 5: Manager Sanction Review' };
+      return { currentStep: 3, isRejected: false, label: 'Stage 3 of 3: Manager Approval & Sanction' };
     case 'APPROVED':
     case 'DISBURSEMENT_PENDING':
     case 'DISBURSED':
-      return { currentStep: 5, isRejected: false, label: 'Stage 5 of 5: Loan Approved & Disbursed' };
+      return { currentStep: 3, isRejected: false, label: 'Stage 3 of 3: Approved & Active' };
     default:
-      return { currentStep: 1, isRejected: false, label: 'Stage 1 of 5: Under Evaluation' };
+      return { currentStep: 1, isRejected: false, label: 'Stage 1 of 3: Under Evaluation' };
   }
 }
 
 const STAGES_LIST = [
   { id: 1, title: 'Submitted', desc: 'Application Received' },
-  { id: 2, title: 'Doc Verification', desc: 'Officer File Audit' },
-  { id: 3, title: 'Credit Assessment', desc: 'CIBIL Bureau Pull' },
-  { id: 4, title: 'Manager Review', desc: 'Sanction Approval' },
-  { id: 5, title: 'Disbursement', desc: 'Funds Released' },
+  { id: 2, title: 'Officer Verification', desc: 'KYC & CIBIL Check' },
+  { id: 3, title: 'Manager Approval', desc: 'Sanction & Activation' },
 ];
 
 /**
@@ -202,7 +199,7 @@ export default function MyApplicationsPage() {
                     <div className="flex justify-between text-[11px] font-semibold">
                       <span className="text-slate-400">{stageProgress.label}</span>
                       <span className={stageProgress.isRejected ? 'text-red-400' : 'text-blue-400'}>
-                        {stageProgress.isRejected ? 'Rejected' : `${stageProgress.currentStep}/5 Steps`}
+                        {stageProgress.isRejected ? 'Rejected' : `${stageProgress.currentStep}/3 Steps`}
                       </span>
                     </div>
                     <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
@@ -210,7 +207,7 @@ export default function MyApplicationsPage() {
                         className={`h-full rounded-full transition-all duration-500 ${
                           stageProgress.isRejected ? 'bg-red-500' : 'bg-gradient-to-r from-blue-600 to-emerald-500'
                         }`}
-                        style={{ width: `${(stageProgress.currentStep / 5) * 100}%` }}
+                        style={{ width: `${(stageProgress.currentStep / 3) * 100}%` }}
                       />
                     </div>
                   </div>
@@ -286,9 +283,9 @@ export default function MyApplicationsPage() {
 
                 return (
                   <div className="py-4">
-                    <div className="grid grid-cols-5 gap-2 relative">
+                    <div className="grid grid-cols-3 gap-4 relative">
                       {STAGES_LIST.map((stage) => {
-                        const isDone = stage.id < currentStep || (stage.id === 5 && currentStep === 5 && !isRejected);
+                        const isDone = stage.id < currentStep || (stage.id === 3 && currentStep === 3 && !isRejected);
                         const isCurrent = stage.id === currentStep && !isRejected;
                         const isStageRejected = isRejected && stage.id === currentStep;
 
