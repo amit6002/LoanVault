@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Landmark, ArrowRight, ShieldCheck, Clock, CheckCircle2, AlertTriangle, ChevronRight, Bell, Calendar, Activity, Coins, Plus, Download, Upload, HelpCircle, CreditCard, Shield, Wallet, FileText } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { PATHS } from '../../../utils/constants';
 import { formatCurrency } from '../../../utils/formatters';
 import { api } from '../../../api/apiClient';
@@ -11,11 +11,11 @@ import PageSkeletonLoader from '../../../components/common/PageSkeletonLoader';
 /**
  * ============================================================
  * BORROWER DASHBOARD COMPONENT
- * Features smooth 1-2 second loading animation during data fetch.
  * ============================================================
  */
 export default function BorrowerDashboard() {
   const navigate = useNavigate();
+  const { openHelpCenter } = useOutletContext() || {};
   const session = JSON.parse(localStorage.getItem('lms_session') || '{}');
   const borrowerName = session.name || 'Rahul Sharma';
 
@@ -139,7 +139,7 @@ export default function BorrowerDashboard() {
           </button>
 
           <button
-            onClick={() => navigate(PATHS.BORROWER_PROFILE)}
+            onClick={() => openHelpCenter ? openHelpCenter() : navigate(PATHS.BORROWER_PROFILE)}
             className="p-4 bg-slate-950/60 border border-slate-800 hover:border-teal-500/50 rounded-xl flex items-center justify-between group transition-all"
           >
             <div className="flex items-center gap-3">

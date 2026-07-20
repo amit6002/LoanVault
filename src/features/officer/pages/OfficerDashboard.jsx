@@ -1,40 +1,69 @@
 import { useState, useEffect } from 'react';
-import { Landmark, FileText, CheckCircle2, Clock, ShieldAlert, AlertTriangle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Landmark, FileText, CheckCircle2, Clock, ShieldAlert, AlertTriangle, ArrowRight, ShieldCheck, MessageSquare, Send, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '../../../utils/constants';
 import { api } from '../../../api/apiClient';
+import { ticketStore } from '../../../utils/ticketStore';
 import Button from '../../../components/common/Button';
 
 /**
  * ============================================================
  * LOAN OFFICER DASHBOARD COMPONENT
- * Renders pending workload statistics, verification queues,
- * and high-priority action warnings.
+ * Features real-time Borrower Support Queries Chat Panel
+ * where Loan Officer can view and reply to borrower queries.
  * ============================================================
  */
 export default function OfficerDashboard() {
   const navigate = useNavigate();
   const session = JSON.parse(localStorage.getItem('lms_session') || '{}');
-  const officerName = session.name || 'Officer';
+  const officerName = session.name || 'Amit Kumar (Loan Officer)';
 
   const [pendingCount, setPendingCount] = useState(0);
+  const [tickets, setTickets] = useState([]);
+  const [selectedTicketId, setSelectedTicketId] = useState(null);
+  const [officerReply, setOfficerReply] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchPendingQueueCount();
+    loadOfficerTickets();
   }, []);
 
   const fetchPendingQueueCount = async () => {
     setIsLoading(true);
     try {
-      const data = await api.get('/api/applications/queue');
+      const data = await api.get('/api/applications/queue').catch(() => []);
       setPendingCount(Array.isArray(data) ? data.length : 0);
     } catch (err) {
-      console.warn('Failed to fetch queue count for officer dashboard:', err);
+      console.warn('Failed to fetch queue count:', err);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const loadOfficerTickets = () => {
+    const data = ticketStore.getTickets();
+    setTickets(data);
+    if (data.length > 0 && !selectedTicketId) {
+      setSelectedTicketId(data[0].id);
+    }
+  };
+
+  const handleSendOfficerReply = (e) => {
+    e.preventDefault();
+    if (!officerReply.trim() || !selectedTicketId) return;
+
+    const updated = ticketStore.addReply(selectedTicketId, {
+      text: officerReply,
+      sender: 'OFFICER',
+      senderName: officerName,
+    });
+
+    setTickets(updated);
+    setOfficerReply('');
+  };
+
+  const currentTicket = tickets.find(t => t.id === selectedTicketId) || tickets[0];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -47,7 +76,7 @@ export default function OfficerDashboard() {
             Welcome Back, {officerName}
           </h1>
           <p className="text-sm text-slate-400">
-            Workload Status: <span className="text-amber-500 font-semibold">Active Review Session</span>
+            Workload Status: <span className="text-amber-500 font-semibold">Active Review & Support Session</span>
           </p>
         </div>
 
@@ -75,11 +104,11 @@ export default function OfficerDashboard() {
           </p>
         </div>
 
-        {/* SLA Nearing Expiry */}
+        {/* Support Queries Inbox */}
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-2 relative overflow-hidden">
-          <div className="absolute top-4 right-4 text-amber-500/20"><AlertTriangle className="h-8 w-8" /></div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">SLA Nearing Expiry</p>
-          <p className="text-2xl font-black text-amber-500">0 Cases</p>
+          <div className="absolute top-4 right-4 text-amber-500/20"><MessageSquare className="h-8 w-8" /></div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Borrower Queries</p>
+          <p className="text-2xl font-black text-amber-500">{tickets.length} Tickets</p>
         </div>
 
         {/* Verified Today */}
@@ -98,53 +127,111 @@ export default function OfficerDashboard() {
 
       </div>
 
-      {/* 3. Action Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* Priority tasks alerts (8 columns on desktop) */}
-        <div className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-          <h2 className="text-lg font-bold text-white border-b border-slate-800 pb-3">
-            High Priority Alerts
+      {/* 3. BORROWER SUPPORT QUERIES & OFFICER CHAT PANEL */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+        <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-blue-500" />
+            Borrower Helpdesk & Support Queries Inbox
           </h2>
-
-          <div className="space-y-4">
-            <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex gap-3 items-start">
-              <ShieldAlert className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold text-red-400">CIBIL Offline Warning</h4>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  The Credit Information Bureau network node is undergoing scheduled server updates. Manual reports can be pulled via local backup APIs if required.
-                </p>
-              </div>
-            </div>
-            <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex gap-3 items-start">
-              <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <h4 className="text-xs font-bold text-amber-400">Quarterly Audit Compliance Check</h4>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Ensure all loan recommendations have completed verification logs attached. Audit inspection checklist releases on 25 Aug 2026.
-                </p>
-              </div>
-            </div>
-          </div>
+          <span className="text-xs text-slate-400 font-mono">
+            {tickets.filter(t => t.status !== 'RESOLVED').length} Active Open Queries
+          </span>
         </div>
 
-        {/* Calendar / Tasks Panel (4 columns on desktop) */}
-        <div className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-          <h2 className="text-lg font-bold text-white border-b border-slate-800 pb-3">
-            Operational Links
-          </h2>
-          <div className="flex flex-col gap-2">
-            <button onClick={() => navigate(PATHS.OFFICER_QUEUE)} className="w-full text-left p-3 rounded-lg bg-slate-950/60 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-all">
-              Go to Document Verification Queue
-            </button>
-            <button onClick={() => navigate(PATHS.OFFICER_PERFORMANCE)} className="w-full text-left p-3 rounded-lg bg-slate-950/60 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-all">
-              Check Monthly Performance Reports
-            </button>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+          
+          {/* Left Column: Tickets Queue List (4 cols) */}
+          <div className="md:col-span-4 space-y-3 max-h-96 overflow-y-auto pr-1">
+            <span className="text-[10px] font-bold text-slate-500 uppercase block">Incoming Borrower Queries</span>
+            {tickets.map(t => (
+              <div
+                key={t.id}
+                onClick={() => setSelectedTicketId(t.id)}
+                className={`p-4 rounded-xl border text-xs cursor-pointer transition-all space-y-1 ${
+                  selectedTicketId === t.id
+                    ? 'bg-blue-600/20 border-blue-500 text-white shadow-lg'
+                    : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex justify-between items-center">
+                  <span className="font-mono text-[10px] font-bold text-blue-400">{t.id}</span>
+                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                    t.status === 'RESOLVED' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                  }`}>
+                    {t.status}
+                  </span>
+                </div>
+                <h5 className="font-bold text-slate-200 truncate">{t.subject}</h5>
+                <div className="flex justify-between text-[10px] text-slate-500 pt-1">
+                  <span>{t.borrowerName}</span>
+                  <span>{t.createdAt}</span>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
 
+          {/* Right Column: Officer Chat Thread Box (8 cols) */}
+          <div className="md:col-span-8 bg-slate-950/80 border border-slate-800 rounded-xl p-5 flex flex-col h-96">
+            {currentTicket ? (
+              <>
+                {/* Header */}
+                <div className="border-b border-slate-800 pb-3 mb-3 flex justify-between items-center">
+                  <div>
+                    <h4 className="font-bold text-white text-sm">{currentTicket.subject}</h4>
+                    <p className="text-[11px] text-slate-400">
+                      Borrower: <span className="text-white font-semibold">{currentTicket.borrowerName}</span> ({currentTicket.borrowerEmail})
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono text-slate-500">{currentTicket.id}</span>
+                </div>
+
+                {/* Messages Thread */}
+                <div className="flex-1 overflow-y-auto space-y-3 pr-2 text-xs">
+                  {currentTicket.messages.map((m) => (
+                    <div
+                      key={m.id}
+                      className={`flex flex-col ${m.sender === 'OFFICER' ? 'items-end' : 'items-start'}`}
+                    >
+                      <div className={`max-w-[85%] p-3 rounded-2xl space-y-1 ${
+                        m.sender === 'OFFICER'
+                          ? 'bg-blue-600 text-white rounded-tr-none'
+                          : 'bg-slate-800 text-slate-100 rounded-tl-none border border-slate-700'
+                      }`}>
+                        <div className="flex justify-between items-center gap-4 text-[10px] text-slate-300 font-semibold border-b border-white/10 pb-1 mb-1">
+                          <span>{m.senderName}</span>
+                          <span className="text-[9px] opacity-75">{m.timestamp}</span>
+                        </div>
+                        <p className="leading-relaxed">{m.text}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Officer Reply Form */}
+                <form onSubmit={handleSendOfficerReply} className="mt-3 pt-3 border-t border-slate-800 flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Type official response to Borrower..."
+                    value={officerReply}
+                    onChange={(e) => setOfficerReply(e.target.value)}
+                    className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                  />
+                  <Button type="submit" variant="primary" size="sm" leftIcon={Send}>
+                    Send Reply
+                  </Button>
+                </form>
+              </>
+            ) : (
+              <div className="m-auto text-center text-slate-500 text-xs">
+                No active support queries selected.
+              </div>
+            )}
+          </div>
+
+        </div>
       </div>
+
     </div>
   );
 }
