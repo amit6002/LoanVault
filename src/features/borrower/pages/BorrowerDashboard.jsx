@@ -5,6 +5,7 @@ import { PATHS } from '../../../utils/constants';
 import { formatCurrency } from '../../../utils/formatters';
 import { api } from '../../../api/apiClient';
 import { loanStore } from '../../../utils/loanStore';
+import { ticketStore } from '../../../utils/ticketStore';
 import Button from '../../../components/common/Button';
 import PageSkeletonLoader from '../../../components/common/PageSkeletonLoader';
 
