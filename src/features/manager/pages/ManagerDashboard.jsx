@@ -9,7 +9,8 @@ import Button from '../../../components/common/Button';
 /**
  * ============================================================
  * LOAN MANAGER DASHBOARD COMPONENT
- * Renders AUM metrics, team load distributions, and approval alerts.
+ * Renders AUM metrics, team load distributions, and approval alerts
+ * fetched live from Spring Boot backend API.
  * ============================================================
  */
 export default function ManagerDashboard() {
@@ -17,20 +18,32 @@ export default function ManagerDashboard() {
   const session = JSON.parse(localStorage.getItem('lms_session') || '{}');
   const managerName = session.name || 'Manager';
 
-  const [pendingCount, setPendingCount] = useState(0);
+  const [stats, setStats] = useState({
+    portfolioAum: 0,
+    pendingSanctionCount: 0,
+    disbursedThisMonth: 0,
+    grossNpaRatio: 0.85,
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchPendingApprovalCount();
+    fetchManagerStats();
   }, []);
 
-  const fetchPendingApprovalCount = async () => {
+  const fetchManagerStats = async () => {
     setIsLoading(true);
     try {
-      const data = await api.get('/api/applications/approval-queue');
-      setPendingCount(Array.isArray(data) ? data.length : 0);
+      const data = await api.get('/api/manager/stats');
+      if (data) {
+        setStats({
+          portfolioAum: data.portfolioAum || 0,
+          pendingSanctionCount: data.pendingSanctionCount || 0,
+          disbursedThisMonth: data.disbursedThisMonth || 0,
+          grossNpaRatio: data.grossNpaRatio || 0.85,
+        });
+      }
     } catch (err) {
-      console.warn('Failed to fetch approval queue count for manager dashboard:', err);
+      console.warn('Failed to fetch manager dashboard stats:', err);
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +83,9 @@ export default function ManagerDashboard() {
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-2 relative overflow-hidden">
           <div className="absolute top-4 right-4 text-emerald-500/20"><TrendingUp className="h-8 w-8" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Portfolio Assets (AUM)</p>
-          <p className="text-2xl font-black text-white">{formatCurrency(1245000000, false)}</p>
+          <p className="text-2xl font-black text-white">
+            {isLoading ? '...' : formatCurrency(stats.portfolioAum, false)}
+          </p>
         </div>
 
         {/* Pending Manager Sanction */}
@@ -78,22 +93,26 @@ export default function ManagerDashboard() {
           <div className="absolute top-4 right-4 text-blue-500/20"><BadgeAlert className="h-8 w-8" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending Sanction</p>
           <p className="text-2xl font-black text-blue-400">
-            {isLoading ? '...' : `${pendingCount} Cases`}
+            {isLoading ? '...' : `${stats.pendingSanctionCount} Cases`}
           </p>
         </div>
 
-        {/* Disbursed This Month */}
+        {/* Disbursed Amount */}
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-2 relative overflow-hidden">
           <div className="absolute top-4 right-4 text-purple-500/20"><Landmark className="h-8 w-8" /></div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Disbursed (July)</p>
-          <p className="text-2xl font-black text-white">{formatCurrency(48500000, false)}</p>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Disbursed Volume</p>
+          <p className="text-2xl font-black text-white">
+            {isLoading ? '...' : formatCurrency(stats.disbursedThisMonth, false)}
+          </p>
         </div>
 
         {/* NPA Ratio */}
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-2 relative overflow-hidden">
           <div className="absolute top-4 right-4 text-red-500/20"><AlertTriangle className="h-8 w-8" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Gross NPA Ratio</p>
-          <p className="text-2xl font-black text-emerald-400">0.85% <span className="text-xs font-semibold text-slate-500 ml-1">/ Standard</span></p>
+          <p className="text-2xl font-black text-emerald-400">
+            {stats.grossNpaRatio}% <span className="text-xs font-semibold text-slate-500 ml-1">/ Standard</span>
+          </p>
         </div>
 
       </div>
@@ -150,11 +169,11 @@ export default function ManagerDashboard() {
             <button onClick={() => navigate(PATHS.MANAGER_APPROVALS)} className="w-full text-left p-3 rounded-lg bg-slate-950/60 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-all">
               Verify Underwriter Sanction Proposal Requests
             </button>
+            <button onClick={() => navigate(PATHS.MANAGER_DISBURSEMENTS)} className="w-full text-left p-3 rounded-lg bg-slate-950/60 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-all">
+              Open Disbursement Hub
+            </button>
             <button onClick={() => navigate(PATHS.MANAGER_PORTFOLIO)} className="w-full text-left p-3 rounded-lg bg-slate-950/60 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-all">
               Generate Portfolio Risk Reports
-            </button>
-            <button onClick={() => navigate(PATHS.MANAGER_TEAM)} className="w-full text-left p-3 rounded-lg bg-slate-950/60 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-all">
-              Manage Team Workload Allocations
             </button>
           </div>
         </div>

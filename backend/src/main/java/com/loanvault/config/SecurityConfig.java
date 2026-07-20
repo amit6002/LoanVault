@@ -86,6 +86,7 @@ public class SecurityConfig {
                 // Borrower-only routes
                 .requestMatchers("/api/applications/my/**").hasRole("BORROWER")
                 .requestMatchers("/api/loans/my/**").hasRole("BORROWER")
+                .requestMatchers("/api/loans/summary/**").hasRole("BORROWER")
                 .requestMatchers("/api/support/**").hasRole("BORROWER")
 
                 // Officer-only routes
@@ -97,6 +98,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/applications/*/approve").hasRole("MANAGER")
                 .requestMatchers("/api/applications/*/reject").hasRole("MANAGER")
                 .requestMatchers("/api/disbursements/**").hasRole("MANAGER")
+                .requestMatchers("/api/manager/**").hasRole("MANAGER")
 
                 // Admin-only routes
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")

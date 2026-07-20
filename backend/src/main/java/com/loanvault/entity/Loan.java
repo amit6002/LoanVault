@@ -1,5 +1,6 @@
 package com.loanvault.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 @Table(name = "loans")
 @Getter @Setter @Builder
 @NoArgsConstructor @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Loan {
 
     @Id
@@ -29,13 +31,15 @@ public class Loan {
     private String loanAccountNumber;
 
     // The borrower who owns this loan
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "borrower_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "authorities"})
     private User borrower;
 
     // The application that this loan was created from
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "application_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "borrower", "assignedOfficer"})
     private LoanApplication application;
 
     @Column(nullable = false)
