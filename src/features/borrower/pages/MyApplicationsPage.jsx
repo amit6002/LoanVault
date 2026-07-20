@@ -258,7 +258,7 @@ export default function MyApplicationsPage() {
 
               {/* Panel Tabs */}
               <div className="flex border-b border-slate-800 text-xs font-semibold gap-6">
-                {['Application Timeline', 'Application Details', 'Documents'].map(tab => (
+                {['Application Timeline', 'Application Details'].map(tab => (
                   <button
                     key={tab}
                     onClick={() => setPanelTab(tab)}

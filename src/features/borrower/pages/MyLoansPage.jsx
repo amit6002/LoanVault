@@ -211,7 +211,7 @@ export default function MyLoansPage() {
 
               {/* Navigation Tabs */}
               <div className="flex border-b border-slate-800 text-xs font-semibold gap-6 overflow-x-auto pb-1">
-                {['Overview', 'EMI Schedule', 'Transactions', 'Documents'].map((tab) => (
+                {['Overview', 'EMI Schedule', 'Transactions'].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setDetailTab(tab)}

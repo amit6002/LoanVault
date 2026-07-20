@@ -46,7 +46,6 @@ export default function DashboardLayout() {
       { label: 'My Loans', path: PATHS.BORROWER_LOANS, icon: Landmark },
       { label: 'Applications', path: PATHS.BORROWER_APPLICATIONS, icon: FileText },
       { label: 'EMI & Payments', path: PATHS.BORROWER_EMI_CALENDAR, icon: CreditCard },
-      { label: 'Documents', path: PATHS.BORROWER_DOCUMENTS, icon: Folder },
       { label: 'Statements', path: PATHS.BORROWER_STATEMENTS, icon: BarChart3 },
       { label: 'Profile & Settings', path: PATHS.BORROWER_PROFILE, icon: User },
     ],

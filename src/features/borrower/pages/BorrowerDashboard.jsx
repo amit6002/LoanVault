@@ -89,7 +89,7 @@ export default function BorrowerDashboard() {
           QUICK ACTIONS
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
           
           <button
             onClick={() => navigate(PATHS.BORROWER_APPLY)}
@@ -139,21 +139,7 @@ export default function BorrowerDashboard() {
             <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
           </button>
 
-          <button
-            onClick={() => navigate(PATHS.BORROWER_DOCUMENTS)}
-            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-amber-500/50 rounded-xl flex items-center justify-between group transition-all"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg">
-                <Upload className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <p className="font-bold text-white">Upload Documents</p>
-                <p className="text-[10px] text-slate-500">Submit documents</p>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
-          </button>
+
 
           <button
             onClick={() => navigate(PATHS.BORROWER_PROFILE)}
