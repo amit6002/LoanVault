@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Landmark, ArrowRight, ShieldCheck, Clock, CheckCircle2, AlertTriangle, ChevronRight, Bell, Calendar, Activity, Coins, ShieldAlert, Plus, Download, Upload, HelpCircle, CreditCard, FileText } from 'lucide-react';
+import { Landmark, ArrowRight, ShieldCheck, Clock, CheckCircle2, AlertTriangle, ChevronRight, Bell, Calendar, Activity, Coins, Plus, Download, Upload, HelpCircle, CreditCard } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PATHS } from '../../../utils/constants';
 import { formatCurrency } from '../../../utils/formatters';
@@ -9,12 +9,11 @@ import Button from '../../../components/common/Button';
 /**
  * ============================================================
  * BORROWER DASHBOARD COMPONENT
- * Implements the 5-second answer architecture from reference design:
+ *  - Quick Actions Bar AT THE TOP of the dashboard
  *  - 4 Top KPIs: Total Outstanding, Next EMI, Active Loans, Credit Score
  *  - Loan Portfolio Breakdown: Doughnut distribution + Total Disbursed/Repaid
  *  - Upcoming EMI Payment Card with direct Pay Now button
- *  - Recent Activity Timeline with checkmarks (EMI Paid, Docs Verified, Approved, Disbursed)
- *  - Quick Actions bar (Apply Loan, Pay EMI, Download Statement, Upload Documents, Raise Query)
+ *  - Recent Activity Timeline with checkmarks
  * ============================================================
  */
 export default function BorrowerDashboard() {
@@ -118,29 +117,87 @@ export default function BorrowerDashboard() {
         </div>
       )}
 
-      {/* 1. Welcome Header Banner */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 relative overflow-hidden flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-600/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="space-y-1 relative z-10">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            Welcome back, {userProfile?.name || borrowerName} 👋
-          </h1>
-          <p className="text-sm text-slate-400">
-            Here's your loan portfolio overview and active account updates.
-          </p>
+      {/* 1. QUICK ACTIONS BAR AT THE TOP (REPLACED WELCOME BANNER) */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+        <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+          <h2 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">
+            Quick Actions
+          </h2>
+          <span className="text-xs text-slate-500">Shortcuts to frequently used features</span>
         </div>
 
-        <div className="relative z-10 flex items-center gap-3">
-          <button className="p-2.5 bg-slate-800/80 hover:bg-slate-700 rounded-xl text-slate-300 hover:text-white transition-all relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-blue-500 rounded-full" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+          
+          {/* Action 1: Apply Loan */}
+          <button
+            onClick={() => navigate(PATHS.BORROWER_APPLY)}
+            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-blue-500/50 rounded-xl text-left space-y-2 group transition-all"
+          >
+            <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg w-fit group-hover:scale-110 transition-transform">
+              <Plus className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white">Apply Loan</p>
+              <p className="text-[10px] text-slate-500">New loan application</p>
+            </div>
           </button>
 
-          <Link to={PATHS.BORROWER_APPLY}>
-            <Button variant="primary" size="md" rightIcon={ArrowRight}>
-              Apply for New Loan →
-            </Button>
-          </Link>
+          {/* Action 2: Pay EMI */}
+          <button
+            onClick={() => navigate(PATHS.BORROWER_EMI_CALENDAR)}
+            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-emerald-500/50 rounded-xl text-left space-y-2 group transition-all"
+          >
+            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg w-fit group-hover:scale-110 transition-transform">
+              <CreditCard className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white">Pay EMI</p>
+              <p className="text-[10px] text-slate-500">Secure online payment</p>
+            </div>
+          </button>
+
+          {/* Action 3: Download Statement */}
+          <button
+            onClick={() => navigate(PATHS.BORROWER_STATEMENTS)}
+            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-purple-500/50 rounded-xl text-left space-y-2 group transition-all"
+          >
+            <div className="p-2 bg-purple-500/10 text-purple-400 rounded-lg w-fit group-hover:scale-110 transition-transform">
+              <Download className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white">Download Statement</p>
+              <p className="text-[10px] text-slate-500">Tax & loan reports</p>
+            </div>
+          </button>
+
+          {/* Action 4: Upload Documents */}
+          <button
+            onClick={() => navigate(PATHS.BORROWER_DOCUMENTS)}
+            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-amber-500/50 rounded-xl text-left space-y-2 group transition-all"
+          >
+            <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg w-fit group-hover:scale-110 transition-transform">
+              <Upload className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white">Upload Documents</p>
+              <p className="text-[10px] text-slate-500">KYC & income files</p>
+            </div>
+          </button>
+
+          {/* Action 5: Raise Query */}
+          <button
+            onClick={() => navigate(PATHS.BORROWER_PROFILE)}
+            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-teal-500/50 rounded-xl text-left space-y-2 group transition-all col-span-2 sm:col-span-1"
+          >
+            <div className="p-2 bg-teal-500/10 text-teal-400 rounded-lg w-fit group-hover:scale-110 transition-transform">
+              <HelpCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-white">Raise Query</p>
+              <p className="text-[10px] text-slate-500">Support & help center</p>
+            </div>
+          </button>
+
         </div>
       </div>
 
@@ -373,87 +430,6 @@ export default function BorrowerDashboard() {
 
         </div>
 
-      </div>
-
-      {/* 4. QUICK ACTIONS BAR (Bottom Row) */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-          Quick Actions
-        </h2>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-          
-          {/* Action 1: Apply Loan */}
-          <button
-            onClick={() => navigate(PATHS.BORROWER_APPLY)}
-            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-blue-500/50 rounded-xl text-left space-y-2 group transition-all"
-          >
-            <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg w-fit group-hover:scale-110 transition-transform">
-              <Plus className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-white">Apply Loan</p>
-              <p className="text-[10px] text-slate-500">New loan application</p>
-            </div>
-          </button>
-
-          {/* Action 2: Pay EMI */}
-          <button
-            onClick={() => navigate(PATHS.BORROWER_EMI_CALENDAR)}
-            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-emerald-500/50 rounded-xl text-left space-y-2 group transition-all"
-          >
-            <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg w-fit group-hover:scale-110 transition-transform">
-              <CreditCard className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-white">Pay EMI</p>
-              <p className="text-[10px] text-slate-500">Secure online payment</p>
-            </div>
-          </button>
-
-          {/* Action 3: Download Statement */}
-          <button
-            onClick={() => navigate(PATHS.BORROWER_STATEMENTS)}
-            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-purple-500/50 rounded-xl text-left space-y-2 group transition-all"
-          >
-            <div className="p-2 bg-purple-500/10 text-purple-400 rounded-lg w-fit group-hover:scale-110 transition-transform">
-              <Download className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-white">Download Statement</p>
-              <p className="text-[10px] text-slate-500">Tax & loan reports</p>
-            </div>
-          </button>
-
-          {/* Action 4: Upload Documents */}
-          <button
-            onClick={() => navigate(PATHS.BORROWER_DOCUMENTS)}
-            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-amber-500/50 rounded-xl text-left space-y-2 group transition-all"
-          >
-            <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg w-fit group-hover:scale-110 transition-transform">
-              <Upload className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-white">Upload Documents</p>
-              <p className="text-[10px] text-slate-500">KYC & income files</p>
-            </div>
-          </button>
-
-          {/* Action 5: Raise Query */}
-          <button
-            onClick={() => navigate(PATHS.BORROWER_PROFILE)}
-            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-teal-500/50 rounded-xl text-left space-y-2 group transition-all col-span-2 sm:col-span-1"
-          >
-            <div className="p-2 bg-teal-500/10 text-teal-400 rounded-lg w-fit group-hover:scale-110 transition-transform">
-              <HelpCircle className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-white">Raise Query</p>
-              <p className="text-[10px] text-slate-500">Support & help center</p>
-            </div>
-          </button>
-
-        </div>
       </div>
 
     </div>
