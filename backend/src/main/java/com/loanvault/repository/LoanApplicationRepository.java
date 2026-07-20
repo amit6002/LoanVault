@@ -31,6 +31,9 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
 
     Optional<LoanApplication> findByReferenceId(String referenceId);
 
+    // Fetch queued PENDING_ASSIGNMENT loans for a branch ordered by creation time ASC
+    List<LoanApplication> findByServicingBranchIdAndStatusOrderByAppliedAtAsc(Long branchId, Status status);
+
     // Count by status for dashboard metrics
     long countByStatus(Status status);
 

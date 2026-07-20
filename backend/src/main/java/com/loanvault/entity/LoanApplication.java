@@ -34,7 +34,19 @@ public class LoanApplication {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "authorities"})
     private User borrower;
 
-    // Officer assigned to verify this application
+    // Servicing branch chosen by borrower for processing this loan application
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "servicing_branch_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "manager"})
+    private Branch servicingBranch;
+
+    // Branch Manager handling this loan application's sanctioning
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "assigned_manager_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "authorities"})
+    private User assignedManager;
+
+    // Officer assigned to verify this application (dynamically allocated via Round Robin)
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "assigned_officer_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "authorities"})
@@ -126,6 +138,7 @@ public class LoanApplication {
     // Application lifecycle status
     // ============================================================
     public enum Status {
+        PENDING_ASSIGNMENT,
         SUBMITTED,
         DOC_VERIFICATION,
         CREDIT_CHECK,

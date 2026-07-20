@@ -57,9 +57,25 @@ public class User implements UserDetails {
     @Column
     private String googleId;
 
-    // Branch the borrower selected during registration
+    // Branch association for Officers/Managers or preferred servicing branch for Borrowers
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "servicing_branch_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "manager"})
+    private Branch servicingBranch;
+
+    // Legacy branch code/name string representation
     @Column
     private String branch;
+
+    // Active status flag for Round Robin assignment skipping
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean active = true;
+
+    // Leave status flag for skipping officers temporarily on leave
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean onLeave = false;
 
     // ---- Profile Details Saved in Neon DB ----
     @Column

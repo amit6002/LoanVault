@@ -1,11 +1,15 @@
 package com.loanvault.controller;
 
 import com.loanvault.dto.response.ApiResponse;
+import com.loanvault.dto.response.LoanAssignmentResultDTO;
+import com.loanvault.entity.Branch;
 import com.loanvault.entity.LoanApplication;
 import com.loanvault.entity.User;
+import com.loanvault.repository.BranchRepository;
 import com.loanvault.repository.LoanApplicationRepository;
 import com.loanvault.repository.UserRepository;
 import com.loanvault.service.AuditService;
+import com.loanvault.service.LoanAssignmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -52,12 +56,14 @@ public class LoanApplicationController {
     private final LoanApplicationRepository applicationRepository;
     private final UserRepository userRepository;
     private final LoanRepository loanRepository;
+    private final BranchRepository branchRepository;
+    private final LoanAssignmentService loanAssignmentService;
     private final AuditService auditService;
 
     // ===================== BORROWER ENDPOINTS =====================
 
     /**
-     * Submit a new loan application (Borrower only).
+     * Submit a new loan application with automatic dynamic Round Robin loan assignment.
      */
     @PostMapping
     @PreAuthorize("hasRole('BORROWER')")
@@ -85,13 +91,37 @@ public class LoanApplicationController {
             .status(LoanApplication.Status.SUBMITTED)
             .build();
 
-        applicationRepository.save(application);
+        // Determine Servicing Branch chosen by borrower (or default active branch)
+        Branch servicingBranch = null;
+        if (payload.get("servicingBranchId") != null) {
+            Long branchId = Long.parseLong(payload.get("servicingBranchId").toString());
+            servicingBranch = branchRepository.findById(branchId).orElse(null);
+        } else if (payload.get("servicingBranchCode") != null) {
+            servicingBranch = branchRepository.findByCode((String) payload.get("servicingBranchCode")).orElse(null);
+        } else if (currentUser.getServicingBranch() != null) {
+            servicingBranch = currentUser.getServicingBranch();
+        }
+
+        if (servicingBranch == null) {
+            servicingBranch = branchRepository.findByActiveTrue().stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("No active servicing branch found in system."));
+        }
+
+        // Perform Automatic Dynamic Round-Robin Loan Officer Assignment
+        LoanAssignmentResultDTO assignmentResult = loanAssignmentService.assignLoanOfficer(application, servicingBranch);
 
         auditService.log(currentUser.getEmail(), "LOAN_APPLICATION_SUBMITTED",
-            "LoanApplication", refId, "New " + application.getLoanType() + " loan application");
+            "LoanApplication", refId, String.format("Submitted application assigned to Branch [%s], Officer [%s]",
+                servicingBranch.getCode(), assignmentResult.getOfficerName()));
 
         return ResponseEntity.ok(ApiResponse.success(
-            "Application submitted successfully!", Map.of("referenceId", refId)
+            "Application submitted and assigned successfully!",
+            Map.of(
+                "referenceId", refId,
+                "servicingBranch", servicingBranch.getCode(),
+                "assignedOfficer", assignmentResult.getOfficerName() != null ? assignmentResult.getOfficerName() : "PENDING_ASSIGNMENT",
+                "assignmentStatus", assignmentResult.getAssignmentStatus()
+            )
         ));
     }
 
