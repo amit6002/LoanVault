@@ -6,14 +6,13 @@ import { formatCurrency } from '../../../utils/formatters';
 import { api } from '../../../api/apiClient';
 import { loanStore } from '../../../utils/loanStore';
 import Button from '../../../components/common/Button';
+import PageSkeletonLoader from '../../../components/common/PageSkeletonLoader';
 
 /**
  * ============================================================
  * MY LOANS PAGE COMPONENT
  * 1-to-1 visual fidelity matching Image 2 mockup.
- * Master-Detail Architecture with Dynamic Loan Store Data Binding:
- *   Left: All Loans cards (Business Loan, Vehicle Loan, Home Loan)
- *   Right: Workspace Details (Overview, EMI Schedule, Transactions, Documents)
+ * Features smooth 1-second PageSkeletonLoader transition.
  * ============================================================
  */
 export default function MyLoansPage() {
@@ -25,12 +24,14 @@ export default function MyLoansPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [paymentMsg, setPaymentMsg] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = () => {
+    setIsLoading(true);
     const storedLoans = loanStore.getLoans();
     const storedTxns = loanStore.getTransactions();
     setLoans(storedLoans);
@@ -38,6 +39,9 @@ export default function MyLoansPage() {
     if (storedLoans.length > 0 && !storedLoans.some(l => l.id === activeTab)) {
       setActiveTab(storedLoans[0].id);
     }
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
   };
 
   const handlePayEmiNow = (loanId) => {
@@ -59,6 +63,10 @@ export default function MyLoansPage() {
 
   const selectedLoan = loans.find(l => l.id === activeTab) || loans[0];
   const loanTxns = selectedLoan ? transactions.filter(t => t.loanId === selectedLoan.id) : [];
+
+  if (isLoading) {
+    return <PageSkeletonLoader title="Loading Loan Accounts & Amortization Schedules..." />;
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">

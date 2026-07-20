@@ -84,7 +84,9 @@ export default function MyApplicationsPage() {
     } catch (err) {
       console.warn('Failed to fetch applications:', err);
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
     }
   };
 
@@ -100,6 +102,10 @@ export default function MyApplicationsPage() {
     if (activeTabFilter === 'REJECTED') return app.status === 'REJECTED';
     return true;
   });
+
+  if (isLoading) {
+    return <PageSkeletonLoader title="Loading Loan Applications & Underwriting Stages..." />;
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">

@@ -6,11 +6,12 @@ import { formatCurrency } from '../../../utils/formatters';
 import { api } from '../../../api/apiClient';
 import { loanStore } from '../../../utils/loanStore';
 import Button from '../../../components/common/Button';
+import PageSkeletonLoader from '../../../components/common/PageSkeletonLoader';
 
 /**
  * ============================================================
  * BORROWER DASHBOARD COMPONENT
- * QUICK ACTIONS section placed AT THE TOP where Welcome back banner was.
+ * Features smooth 1-2 second loading animation during data fetch.
  * ============================================================
  */
 export default function BorrowerDashboard() {
@@ -21,6 +22,7 @@ export default function BorrowerDashboard() {
   const [userProfile, setUserProfile] = useState(null);
   const [loans, setLoans] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
 
   useEffect(() => {
@@ -28,15 +30,25 @@ export default function BorrowerDashboard() {
   }, []);
 
   const loadDashboardData = async () => {
-    const profileRes = await api.get('/api/user/profile').catch(() => null);
-    if (profileRes) {
-      setUserProfile(profileRes);
-    }
+    setIsLoading(true);
+    try {
+      const profileRes = await api.get('/api/user/profile').catch(() => null);
+      if (profileRes) {
+        setUserProfile(profileRes);
+      }
 
-    const storedLoans = loanStore.getLoans();
-    const storedTxns = loanStore.getTransactions();
-    setLoans(storedLoans);
-    setTransactions(storedTxns);
+      const storedLoans = loanStore.getLoans();
+      const storedTxns = loanStore.getTransactions();
+      setLoans(storedLoans);
+      setTransactions(storedTxns);
+    } catch (err) {
+      console.warn('Dashboard fetch warning:', err);
+    } finally {
+      // Artificial 1-second smooth loading animation to prevent abrupt layout shift / perceived lag
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+    }
   };
 
   const handlePayEmiNow = (loanId) => {
@@ -48,6 +60,10 @@ export default function BorrowerDashboard() {
       setIsPaying(false);
     }, 600);
   };
+
+  if (isLoading) {
+    return <PageSkeletonLoader title="Loading Loan Portfolio & Account Summary..." />;
+  }
 
   const activeLoans = loans.filter(l => l.status === 'ACTIVE');
   const totalOutstanding = activeLoans.reduce((acc, l) => acc + l.outstandingPrincipal, 0);
@@ -83,14 +99,13 @@ export default function BorrowerDashboard() {
         </div>
       )}
 
-      {/* 1. QUICK ACTIONS BAR AT THE VERY TOP (REPLACED WELCOME BANNER) */}
+      {/* 1. QUICK ACTIONS BAR AT THE VERY TOP */}
       <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
         <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
           QUICK ACTIONS
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-          
           <button
             onClick={() => navigate(PATHS.BORROWER_APPLY)}
             className="p-4 bg-slate-950/60 border border-slate-800 hover:border-blue-500/50 rounded-xl flex items-center justify-between group transition-all"
@@ -124,24 +139,6 @@ export default function BorrowerDashboard() {
           </button>
 
           <button
-            onClick={() => navigate(PATHS.BORROWER_STATEMENTS)}
-            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-purple-500/50 rounded-xl flex items-center justify-between group transition-all"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
-                <Download className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <p className="font-bold text-white">Download Statement</p>
-                <p className="text-[10px] text-slate-500">View loan statements</p>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
-          </button>
-
-
-
-          <button
             onClick={() => navigate(PATHS.BORROWER_PROFILE)}
             className="p-4 bg-slate-950/60 border border-slate-800 hover:border-teal-500/50 rounded-xl flex items-center justify-between group transition-all"
           >
@@ -156,7 +153,6 @@ export default function BorrowerDashboard() {
             </div>
             <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
           </button>
-
         </div>
       </div>
 

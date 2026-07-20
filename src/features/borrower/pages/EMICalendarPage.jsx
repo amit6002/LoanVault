@@ -3,13 +3,12 @@ import { Calendar as CalendarIcon, Clock, CheckCircle2, AlertCircle, CreditCard,
 import { formatCurrency } from '../../../utils/formatters';
 import { loanStore } from '../../../utils/loanStore';
 import Button from '../../../components/common/Button';
+import PageSkeletonLoader from '../../../components/common/PageSkeletonLoader';
 
 /**
  * ============================================================
  * EMI & PAYMENTS PAGE COMPONENT (Borrower Portal)
- * Integrates with central loanStore.
- * Shows all active loan EMIs in Upcoming (e.g. Business Loan & Vehicle Loan).
- * Clicking "Pay Now" deducts loan balance, marks EMI as paid, and moves it to History!
+ * Features smooth 1-second PageSkeletonLoader transition.
  * ============================================================
  */
 export default function EMICalendarPage() {
@@ -17,6 +16,7 @@ export default function EMICalendarPage() {
   const [viewMode, setViewMode] = useState('list');
   const [loans, setLoans] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
   const [paymentSuccessMsg, setPaymentSuccessMsg] = useState('');
 
@@ -25,10 +25,14 @@ export default function EMICalendarPage() {
   }, []);
 
   const loadData = () => {
+    setIsLoading(true);
     const storedLoans = loanStore.getLoans();
     const storedTxns = loanStore.getTransactions();
     setLoans(storedLoans);
     setTransactions(storedTxns);
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
   };
 
   const handlePayNow = (loanId) => {
@@ -49,6 +53,10 @@ export default function EMICalendarPage() {
   const upcomingPayments = activeLoans.filter(l => !l.paidThisMonth);
   const totalPaidThisYear = loans.reduce((acc, l) => acc + (l.paidMonths * l.emiAmount), 0);
   const nextEmiLoan = upcomingPayments[0] || activeLoans[0];
+
+  if (isLoading) {
+    return <PageSkeletonLoader title="Loading Upcoming EMIs & Payment Schedules..." />;
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
