@@ -249,6 +249,8 @@ export const PATHS = {
   BORROWER_APPLICATIONS: '/borrower/applications',
   BORROWER_LOANS: '/borrower/loans',
   BORROWER_EMI_CALENDAR: '/borrower/emi-calendar',
+  BORROWER_DOCUMENTS: '/borrower/documents',
+  BORROWER_STATEMENTS: '/borrower/statements',
   BORROWER_SUPPORT: '/borrower/support',
   BORROWER_PROFILE: '/borrower/profile',
   BORROWER_NOTIFICATIONS: '/borrower/notifications',

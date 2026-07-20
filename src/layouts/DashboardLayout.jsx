@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Landmark, Bell, LogOut, ChevronLeft, LayoutDashboard, FileText, Calendar, 
-  LifeBuoy, UserCog, UserCheck, ShieldAlert, BadgeAlert, TrendingUp, Coins 
+  LifeBuoy, UserCog, UserCheck, ShieldAlert, BadgeAlert, TrendingUp, Coins,
+  Folder, BarChart3, User, CreditCard
 } from 'lucide-react';
 import { PATHS, ROLES } from '../utils/constants';
 import Button from '../components/common/Button';
@@ -42,10 +43,12 @@ export default function DashboardLayout() {
   const menuConfigs = {
     [ROLES.BORROWER]: [
       { label: 'Dashboard', path: PATHS.BORROWER_DASHBOARD, icon: LayoutDashboard },
-      { label: 'My Applications', path: PATHS.BORROWER_APPLICATIONS, icon: FileText },
       { label: 'My Loans', path: PATHS.BORROWER_LOANS, icon: Landmark },
-      { label: 'EMI Calendar', path: PATHS.BORROWER_EMI_CALENDAR, icon: Calendar },
-      { label: 'Support Helpdesk', path: PATHS.BORROWER_SUPPORT, icon: LifeBuoy },
+      { label: 'Applications', path: PATHS.BORROWER_APPLICATIONS, icon: FileText },
+      { label: 'EMI & Payments', path: PATHS.BORROWER_EMI_CALENDAR, icon: CreditCard },
+      { label: 'Documents', path: PATHS.BORROWER_DOCUMENTS, icon: Folder },
+      { label: 'Statements', path: PATHS.BORROWER_STATEMENTS, icon: BarChart3 },
+      { label: 'Profile & Settings', path: PATHS.BORROWER_PROFILE, icon: User },
     ],
     [ROLES.OFFICER]: [
       { label: 'Overview', path: PATHS.OFFICER_DASHBOARD, icon: LayoutDashboard },
