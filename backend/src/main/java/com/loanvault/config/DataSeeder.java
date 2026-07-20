@@ -7,6 +7,7 @@ import com.loanvault.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -15,11 +16,11 @@ import java.util.List;
 
 /**
  * ============================================================
- * DATABASE DATA SEEDER
+ * DATABASE DATA SEEDER & AUTOMATIC SCHEMA MIGRATOR
  * Runs automatically on Spring Boot startup.
- * Seeds initial demo accounts (Admin, Manager, Officer, Borrower)
- * and sample loan applications if the database is fresh.
- * Real user registrations are untouched!
+ *  1. Migrates missing profile columns on Neon PostgreSQL if needed.
+ *  2. Seeds initial demo accounts (Admin, Manager, Officer, Borrower)
+ *  3. Seeds sample loan applications if the database is fresh.
  * ============================================================
  */
 @Component
@@ -30,11 +31,38 @@ public class DataSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final LoanApplicationRepository applicationRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JdbcTemplate jdbcTemplate;
 
     @Override
     public void run(String... args) throws Exception {
+        migrateDatabaseSchema();
         seedUsers();
         seedApplications();
+    }
+
+    /**
+     * Automatic SQL DDL Migration for Neon PostgreSQL
+     * Ensures all new profile columns exist in the users table.
+     */
+    private void migrateDatabaseSchema() {
+        try {
+            log.info("Checking database schema migrations for Neon Cloud PostgreSQL...");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS date_of_birth VARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS pan_number VARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS aadhaar_number VARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS address_line1 VARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS city VARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS state VARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS pincode VARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS employment_type VARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS employer_name VARCHAR(255)");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS monthly_income NUMERIC(12, 2)");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_completed BOOLEAN DEFAULT FALSE");
+            log.info("Database schema migration completed successfully!");
+        } catch (Exception e) {
+            log.warn("Schema migration note: {}", e.getMessage());
+        }
     }
 
     private void seedUsers() {
@@ -49,6 +77,7 @@ public class DataSeeder implements CommandLineRunner {
                 .enabled(true)
                 .kycVerified(true)
                 .branch("MUMBAI")
+                .profileCompleted(true)
                 .build();
             userRepository.save(admin);
             log.info("Seeded Demo Admin User: admin@loanvault.com");
@@ -65,6 +94,7 @@ public class DataSeeder implements CommandLineRunner {
                 .enabled(true)
                 .kycVerified(true)
                 .branch("MUMBAI")
+                .profileCompleted(true)
                 .build();
             userRepository.save(manager);
             log.info("Seeded Demo Manager User: manager@loanvault.com");
@@ -81,6 +111,7 @@ public class DataSeeder implements CommandLineRunner {
                 .enabled(true)
                 .kycVerified(true)
                 .branch("MUMBAI")
+                .profileCompleted(true)
                 .build();
             userRepository.save(officer);
             log.info("Seeded Demo Officer User: officer@loanvault.com");
@@ -97,6 +128,12 @@ public class DataSeeder implements CommandLineRunner {
                 .enabled(true)
                 .kycVerified(true)
                 .branch("MUMBAI")
+                .panNumber("ABCDE1234F")
+                .aadhaarNumber("123456789012")
+                .employmentType("SALARIED")
+                .employerName("TCS Ltd")
+                .monthlyIncome(new BigDecimal("125000"))
+                .profileCompleted(true)
                 .build();
             userRepository.save(borrower);
             log.info("Seeded Demo Borrower User: borrower@loanvault.com");
