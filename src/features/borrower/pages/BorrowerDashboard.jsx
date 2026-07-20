@@ -140,8 +140,13 @@ export default function BorrowerDashboard() {
 
           <button
             onClick={() => openHelpCenter ? openHelpCenter() : navigate(PATHS.BORROWER_PROFILE)}
-            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-teal-500/50 rounded-xl flex items-center justify-between group transition-all"
+            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-teal-500/50 rounded-xl flex items-center justify-between group transition-all relative"
           >
+            {ticketStore.getUnreadCount() > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 px-2 py-0.5 rounded-full bg-red-500 text-white font-bold text-[9px] shadow-lg animate-pulse">
+                {ticketStore.getUnreadCount()} Unread
+              </span>
+            )}
             <div className="flex items-center gap-3">
               <div className="p-2 bg-teal-500/10 text-teal-400 rounded-lg">
                 <HelpCircle className="h-4 w-4" />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Landmark, Bell, LogOut, LayoutDashboard, FileText, Calendar, 
@@ -6,6 +6,7 @@ import {
   Folder, BarChart3, User, CreditCard
 } from 'lucide-react';
 import { PATHS, ROLES } from '../utils/constants';
+import { ticketStore } from '../utils/ticketStore';
 import Button from '../components/common/Button';
 import HelpCenterModal from '../components/modals/HelpCenterModal';
 
@@ -13,11 +14,12 @@ import HelpCenterModal from '../components/modals/HelpCenterModal';
  * ============================================================
  * SECURE DASHBOARD WORKSPACE LAYOUT
  * Features a clean, non-collapsible STICKY sidebar (no scroll needed)
- * Standalone HelpCenterModal support overlay.
+ * Standalone HelpCenterModal support overlay with unread notifications.
  * ============================================================
  */
 export default function DashboardLayout() {
   const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -25,6 +27,19 @@ export default function DashboardLayout() {
   const session = JSON.parse(localStorage.getItem('lms_session') || '{}');
   const userRole = session.role || ROLES.BORROWER;
   const userName = session.name || 'User';
+
+  useEffect(() => {
+    if (userRole === ROLES.BORROWER) {
+      updateUnread();
+      const interval = setInterval(updateUnread, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [userRole]);
+
+  const updateUnread = () => {
+    const count = ticketStore.getUnreadCount();
+    setUnreadCount(count);
+  };
 
   const handleLogOut = () => {
     localStorage.removeItem('lms_session');
@@ -120,7 +135,12 @@ export default function DashboardLayout() {
 
         {/* Need Help Widget Box */}
         {userRole === ROLES.BORROWER && (
-          <div className="mx-3 mb-6 p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-2">
+          <div className="mx-3 mb-6 p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-2 relative">
+            {unreadCount > 0 && (
+              <span className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-red-500 text-white font-bold text-[10px] shadow-lg animate-pulse">
+                {unreadCount} New
+              </span>
+            )}
             <div className="flex items-center gap-2 text-blue-400">
               <LifeBuoy className="h-5 w-5" />
               <span className="text-xs font-bold text-white">Need Help?</span>
@@ -128,9 +148,9 @@ export default function DashboardLayout() {
             <p className="text-[11px] text-slate-400">We're here to assist you with your loan.</p>
             <button
               onClick={() => setIsHelpCenterOpen(true)}
-              className="w-full mt-1 py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all text-center"
+              className="w-full mt-1 py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all text-center flex items-center justify-center gap-2"
             >
-              Visit Help Center →
+              <span>Visit Help Center →</span>
             </button>
           </div>
         )}

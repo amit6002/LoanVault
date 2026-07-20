@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Landmark, FileText, CheckCircle2, Clock, ShieldAlert, AlertTriangle, ArrowRight, ShieldCheck, MessageSquare, Send, User } from 'lucide-react';
+import { Landmark, FileText, CheckCircle2, Clock, ShieldAlert, AlertTriangle, ArrowRight, ShieldCheck, MessageSquare, Send, User, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '../../../utils/constants';
 import { api } from '../../../api/apiClient';
@@ -10,7 +10,7 @@ import Button from '../../../components/common/Button';
  * ============================================================
  * LOAN OFFICER DASHBOARD COMPONENT
  * Features real-time Borrower Support Queries Chat Panel
- * where Loan Officer can view and reply to borrower queries.
+ * with REOPENED ticket priority alerts and continuous messaging.
  * ============================================================
  */
 export default function OfficerDashboard() {
@@ -41,29 +41,33 @@ export default function OfficerDashboard() {
     }
   };
 
-  const loadOfficerTickets = () => {
-    const data = ticketStore.getTickets();
+  const loadOfficerTickets = async () => {
+    const data = await ticketStore.getTickets(true);
     setTickets(data);
     if (data.length > 0 && !selectedTicketId) {
-      setSelectedTicketId(data[0].id);
+      setSelectedTicketId(data[0].id || data[0].ticketId);
     }
   };
 
-  const handleSendOfficerReply = (e) => {
+  const handleSendOfficerReply = async (e) => {
     e.preventDefault();
     if (!officerReply.trim() || !selectedTicketId) return;
 
-    const updated = ticketStore.addReply(selectedTicketId, {
+    setIsLoading(true);
+    await ticketStore.addMessage(selectedTicketId, {
       text: officerReply,
-      sender: 'OFFICER',
+      senderRole: 'OFFICER',
       senderName: officerName,
     });
 
-    setTickets(updated);
+    const refreshed = await ticketStore.getTickets(true);
+    setTickets(refreshed);
     setOfficerReply('');
+    setIsLoading(false);
   };
 
-  const currentTicket = tickets.find(t => t.id === selectedTicketId) || tickets[0];
+  const currentTicket = tickets.find(t => t.id === selectedTicketId || t.ticketId === selectedTicketId) || tickets[0];
+  const reopenedTicketsCount = tickets.filter(t => t.status === 'REOPENED').length;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -108,7 +112,14 @@ export default function OfficerDashboard() {
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-2 relative overflow-hidden">
           <div className="absolute top-4 right-4 text-amber-500/20"><MessageSquare className="h-8 w-8" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Borrower Queries</p>
-          <p className="text-2xl font-black text-amber-500">{tickets.length} Tickets</p>
+          <div className="flex items-center gap-2">
+            <p className="text-2xl font-black text-amber-500">{tickets.length} Tickets</p>
+            {reopenedTicketsCount > 0 && (
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                {reopenedTicketsCount} Reopened
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Verified Today */}
@@ -135,7 +146,7 @@ export default function OfficerDashboard() {
             Borrower Helpdesk & Support Queries Inbox
           </h2>
           <span className="text-xs text-slate-400 font-mono">
-            {tickets.filter(t => t.status !== 'RESOLVED').length} Active Open Queries
+            {tickets.filter(t => t.status !== 'RESOLVED' && t.status !== 'CLOSED').length} Active Open Queries
           </span>
         </div>
 
@@ -144,31 +155,38 @@ export default function OfficerDashboard() {
           {/* Left Column: Tickets Queue List (4 cols) */}
           <div className="md:col-span-4 space-y-3 max-h-96 overflow-y-auto pr-1">
             <span className="text-[10px] font-bold text-slate-500 uppercase block">Incoming Borrower Queries</span>
-            {tickets.map(t => (
-              <div
-                key={t.id}
-                onClick={() => setSelectedTicketId(t.id)}
-                className={`p-4 rounded-xl border text-xs cursor-pointer transition-all space-y-1 ${
-                  selectedTicketId === t.id
-                    ? 'bg-blue-600/20 border-blue-500 text-white shadow-lg'
-                    : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex justify-between items-center">
-                  <span className="font-mono text-[10px] font-bold text-blue-400">{t.id}</span>
-                  <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
-                    t.status === 'RESOLVED' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
-                  }`}>
-                    {t.status}
-                  </span>
+            {tickets.map(t => {
+              const isSelected = selectedTicketId === t.id || selectedTicketId === t.ticketId;
+              const isReopened = t.status === 'REOPENED';
+
+              return (
+                <div
+                  key={t.id || t.ticketId}
+                  onClick={() => setSelectedTicketId(t.id || t.ticketId)}
+                  className={`p-4 rounded-xl border text-xs cursor-pointer transition-all space-y-1 ${
+                    isSelected
+                      ? 'bg-blue-600/20 border-blue-500 text-white shadow-lg'
+                      : isReopened
+                      ? 'bg-amber-500/10 border-amber-500/40 text-slate-200'
+                      : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-mono text-[10px] font-bold text-blue-400">{t.ticketId || t.id}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
+                      t.status === 'RESOLVED' ? 'bg-emerald-500/20 text-emerald-400' : isReopened ? 'bg-amber-500/20 text-amber-400 font-black animate-pulse' : t.status === 'OFFICER_REPLIED' ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      {t.status}
+                    </span>
+                  </div>
+                  <h5 className="font-bold text-slate-200 truncate">{t.subject}</h5>
+                  <div className="flex justify-between text-[10px] text-slate-500 pt-1">
+                    <span>{t.borrowerName}</span>
+                    <span>{t.createdAt}</span>
+                  </div>
                 </div>
-                <h5 className="font-bold text-slate-200 truncate">{t.subject}</h5>
-                <div className="flex justify-between text-[10px] text-slate-500 pt-1">
-                  <span>{t.borrowerName}</span>
-                  <span>{t.createdAt}</span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Right Column: Officer Chat Thread Box (8 cols) */}
@@ -183,18 +201,22 @@ export default function OfficerDashboard() {
                       Borrower: <span className="text-white font-semibold">{currentTicket.borrowerName}</span> ({currentTicket.borrowerEmail})
                     </p>
                   </div>
-                  <span className="text-xs font-mono text-slate-500">{currentTicket.id}</span>
+                  <span className={`px-2.5 py-1 rounded text-[10px] font-bold ${
+                    currentTicket.status === 'RESOLVED' ? 'bg-emerald-500/20 text-emerald-400' : currentTicket.status === 'REOPENED' ? 'bg-amber-500/20 text-amber-400 font-extrabold' : 'bg-blue-500/20 text-blue-400'
+                  }`}>
+                    {currentTicket.status}
+                  </span>
                 </div>
 
                 {/* Messages Thread */}
                 <div className="flex-1 overflow-y-auto space-y-3 pr-2 text-xs">
-                  {currentTicket.messages.map((m) => (
+                  {currentTicket.messages && currentTicket.messages.map((m) => (
                     <div
                       key={m.id}
-                      className={`flex flex-col ${m.sender === 'OFFICER' ? 'items-end' : 'items-start'}`}
+                      className={`flex flex-col ${m.senderRole === 'OFFICER' ? 'items-end' : 'items-start'}`}
                     >
                       <div className={`max-w-[85%] p-3 rounded-2xl space-y-1 ${
-                        m.sender === 'OFFICER'
+                        m.senderRole === 'OFFICER'
                           ? 'bg-blue-600 text-white rounded-tr-none'
                           : 'bg-slate-800 text-slate-100 rounded-tl-none border border-slate-700'
                       }`}>
@@ -202,7 +224,7 @@ export default function OfficerDashboard() {
                           <span>{m.senderName}</span>
                           <span className="text-[9px] opacity-75">{m.timestamp}</span>
                         </div>
-                        <p className="leading-relaxed">{m.text}</p>
+                        <p className="leading-relaxed whitespace-pre-wrap">{m.text}</p>
                       </div>
                     </div>
                   ))}
@@ -217,8 +239,8 @@ export default function OfficerDashboard() {
                     onChange={(e) => setOfficerReply(e.target.value)}
                     className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
                   />
-                  <Button type="submit" variant="primary" size="sm" leftIcon={Send}>
-                    Send Reply
+                  <Button type="submit" variant="primary" size="sm" leftIcon={Send} isLoading={isLoading}>
+                    Send Officer Reply
                   </Button>
                 </form>
               </>
