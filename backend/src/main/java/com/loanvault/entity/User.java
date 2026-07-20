@@ -8,6 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -16,8 +17,7 @@ import java.util.List;
  * ============================================================
  * USER ENTITY
  * Represents all system users across 4 roles: BORROWER, OFFICER,
- * MANAGER, ADMIN. Supports both password-based and Google OAuth2
- * login via the authProvider field.
+ * MANAGER, ADMIN. Stores profile details in Neon Cloud DB.
  * ============================================================
  */
 @Entity
@@ -60,6 +60,44 @@ public class User implements UserDetails {
     // Branch the borrower selected during registration
     @Column
     private String branch;
+
+    // ---- Profile Details Saved in Neon DB ----
+    @Column
+    private String phone;
+
+    @Column
+    private String dateOfBirth;
+
+    @Column
+    private String panNumber;
+
+    @Column
+    private String aadhaarNumber;
+
+    @Column
+    private String addressLine1;
+
+    @Column
+    private String city;
+
+    @Column
+    private String state;
+
+    @Column
+    private String pincode;
+
+    @Column
+    private String employmentType;
+
+    @Column
+    private String employerName;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal monthlyIncome;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean profileCompleted = false;
 
     @Column(nullable = false)
     @Builder.Default

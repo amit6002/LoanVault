@@ -83,6 +83,9 @@ public class SecurityConfig {
                 // Public GET for loan products (calculator)
                 .requestMatchers(HttpMethod.GET, "/api/loan-products").permitAll()
 
+                // Authenticated user profile routes
+                .requestMatchers("/api/user/**").authenticated()
+
                 // Borrower-only routes
                 .requestMatchers("/api/applications/my/**").hasRole("BORROWER")
                 .requestMatchers("/api/loans/my/**").hasRole("BORROWER")

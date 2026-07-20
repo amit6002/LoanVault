@@ -20,6 +20,7 @@ import { api } from '../../../api/apiClient';
  */
 export default function LoanApplicationPage() {
   const [step, setStep] = useState(1);
+  const [isProfileLoaded, setIsProfileLoaded] = useState(false);
   const [formData, setFormData] = useState({
     productType: '',
     amount: 100000,
@@ -37,6 +38,32 @@ export default function LoanApplicationPage() {
 
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
+
+  // Fetch saved user profile from Neon Cloud DB on mount to pre-fill form
+  useEffect(() => {
+    fetchSavedProfile();
+  }, []);
+
+  const fetchSavedProfile = async () => {
+    try {
+      const profile = await api.get('/api/user/profile');
+      if (profile) {
+        setFormData(prev => ({
+          ...prev,
+          name: profile.name || prev.name,
+          dob: profile.dateOfBirth || prev.dob,
+          pan: profile.panNumber || prev.pan,
+          aadhaar: profile.aadhaarNumber || prev.aadhaar,
+          income: profile.monthlyIncome ? parseFloat(profile.monthlyIncome) : prev.income,
+          employer: profile.employerName || prev.employer,
+          employmentType: profile.employmentType || 'SALARIED',
+        }));
+        setIsProfileLoaded(true);
+      }
+    } catch (err) {
+      console.warn('Failed to pre-fill profile from Neon DB:', err);
+    }
+  };
 
   // Find currently selected product parameters
   const selectedProduct = useMemo(() => {
@@ -313,7 +340,14 @@ export default function LoanApplicationPage() {
       {/* STEP 3: Personal Information */}
       {step === 3 && (
         <div className="space-y-6">
-          <h2 className="text-xl font-bold text-white border-b border-slate-800 pb-2">Personal Details</h2>
+          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+            <h2 className="text-xl font-bold text-white">Personal Details</h2>
+            {isProfileLoaded && (
+              <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                <CheckCircle className="h-3.5 w-3.5" /> Pre-filled from Neon DB
+              </span>
+            )}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               label="Full Name (as in PAN)"

@@ -18,6 +18,7 @@ import MyApplicationsPage from '../features/borrower/pages/MyApplicationsPage';
 import MyLoansPage from '../features/borrower/pages/MyLoansPage';
 import EMICalendarPage from '../features/borrower/pages/EMICalendarPage';
 import SupportPage from '../features/borrower/pages/SupportPage';
+import BorrowerProfilePage from '../features/borrower/pages/BorrowerProfilePage';
 
 import OfficerDashboard from '../features/officer/pages/OfficerDashboard';
 import ApplicationQueuePage from '../features/officer/pages/ApplicationQueuePage';
@@ -118,6 +119,10 @@ const router = createBrowserRouter([
           {
             path: PATHS.BORROWER_APPLY,
             element: <LoanApplicationPage />,
+          },
+          {
+            path: PATHS.BORROWER_PROFILE,
+            element: <BorrowerProfilePage />,
           },
 
           // Officer Paths
