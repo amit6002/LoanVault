@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Landmark, ArrowRight, ShieldCheck, Clock, CheckCircle2, AlertTriangle, ChevronRight, Bell, Calendar, Activity, Coins, Plus, Download, Upload, HelpCircle, CreditCard, Shield, Wallet } from 'lucide-react';
+import { Landmark, ArrowRight, ShieldCheck, Clock, CheckCircle2, AlertTriangle, ChevronRight, Bell, Calendar, Activity, Coins, Plus, Download, Upload, HelpCircle, CreditCard, Shield, Wallet, FileText } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { PATHS } from '../../../utils/constants';
 import { formatCurrency } from '../../../utils/formatters';
