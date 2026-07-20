@@ -100,6 +100,7 @@ public class SecurityConfig {
 
                 // Admin-only routes
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/applications/all").hasRole("ADMIN")
 
                 // All other requests require authentication
                 .anyRequest().authenticated()

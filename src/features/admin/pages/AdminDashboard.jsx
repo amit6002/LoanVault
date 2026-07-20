@@ -1,13 +1,16 @@
-import { LayoutDashboard, Users, Activity, HardDrive, Cpu, Terminal, ArrowRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { LayoutDashboard, Users, Activity, HardDrive, Cpu, Terminal, ArrowRight, FileText, CheckCircle2, Clock, XCircle, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { PATHS } from '../../../utils/constants';
+import { PATHS, STATUS_CONFIG } from '../../../utils/constants';
+import { formatCurrency } from '../../../utils/formatters';
+import { api } from '../../../api/apiClient';
 import Button from '../../../components/common/Button';
 
 /**
  * ============================================================
  * ADMIN SYSTEM DASHBOARD COMPONENT
  * Renders server nodes health metric gauges, total active account counts,
- * and background operations logs.
+ * real application statistics, and background operations logs.
  * ============================================================
  */
 export default function AdminDashboard() {
@@ -15,11 +18,54 @@ export default function AdminDashboard() {
   const session = JSON.parse(localStorage.getItem('lms_session') || '{}');
   const adminName = session.name || 'System Admin';
 
-  const systemLogs = [
-    { time: '16:42:10', event: 'JWT Token generated for manager@loanvault.com', status: 'SUCCESS' },
-    { time: '16:38:05', event: 'CIBIL Pull API call initiated for LN-2026-04921', status: 'INFO' },
-    { time: '16:15:22', event: 'Document upload verification for APP-00812', status: 'WARNING' },
-    { time: '15:30:11', event: 'New Borrower account registration created', status: 'SUCCESS' }
+  const [appStats, setAppStats] = useState({
+    total: 0,
+    submitted: 0,
+    recommended: 0,
+    approved: 0,
+    rejected: 0,
+  });
+  const [recentApps, setRecentApps] = useState([]);
+  const [isLoadingApps, setIsLoadingApps] = useState(true);
+
+  useEffect(() => {
+    fetchApplicationStats();
+  }, []);
+
+  const fetchApplicationStats = async () => {
+    setIsLoadingApps(true);
+    try {
+      const data = await api.get('/api/applications/all');
+      const apps = Array.isArray(data) ? data : [];
+
+      // Compute stats from real data
+      setAppStats({
+        total: apps.length,
+        submitted: apps.filter(a => a.status === 'SUBMITTED' || a.status === 'DOC_VERIFICATION' || a.status === 'CREDIT_CHECK').length,
+        recommended: apps.filter(a => a.status === 'RECOMMENDED_APPROVE' || a.status === 'RECOMMENDED_REJECT').length,
+        approved: apps.filter(a => a.status === 'APPROVED' || a.status === 'DISBURSEMENT_PENDING' || a.status === 'DISBURSED').length,
+        rejected: apps.filter(a => a.status === 'REJECTED').length,
+      });
+
+      // Show most recent 4 applications in the log
+      setRecentApps(apps.slice(0, 4).map(a => ({
+        time: a.lastUpdatedAt || a.appliedAt
+          ? new Date(a.lastUpdatedAt || a.appliedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+          : 'N/A',
+        event: `${a.fullName || 'Borrower'} — ${a.loanType || 'Loan'} application (${a.referenceId})`,
+        status: a.status === 'REJECTED' ? 'WARNING'
+          : (a.status === 'APPROVED' || a.status === 'DISBURSEMENT_PENDING' || a.status === 'DISBURSED') ? 'SUCCESS'
+          : 'INFO',
+      })));
+    } catch (err) {
+      console.warn('Failed to fetch application stats:', err);
+    } finally {
+      setIsLoadingApps(false);
+    }
+  };
+
+  const systemLogs = recentApps.length > 0 ? recentApps : [
+    { time: '--:--:--', event: 'No recent application activity', status: 'INFO' },
   ];
 
   return (
@@ -49,35 +95,43 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* 2. System Health Stats Grid */}
+      {/* 2. Application Stats Grid — Real data from backend */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         
-        {/* Total Users */}
+        {/* Total Applications */}
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-2 relative overflow-hidden">
-          <div className="absolute top-4 right-4 text-blue-500/20"><Users className="h-8 w-8" /></div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Active Users</p>
-          <p className="text-2xl font-black text-white">1,424</p>
+          <div className="absolute top-4 right-4 text-blue-500/20"><FileText className="h-8 w-8" /></div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Applications</p>
+          <p className="text-2xl font-black text-white">
+            {isLoadingApps ? '...' : appStats.total}
+          </p>
         </div>
 
-        {/* Server Status */}
+        {/* Pending Review */}
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-2 relative overflow-hidden">
-          <div className="absolute top-4 right-4 text-emerald-500/20"><Activity className="h-8 w-8" /></div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Server Node Health</p>
-          <p className="text-2xl font-black text-emerald-400">99.98% <span className="text-xs font-semibold text-slate-500 ml-1">/ Excellent</span></p>
+          <div className="absolute top-4 right-4 text-amber-500/20"><Clock className="h-8 w-8" /></div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending Review</p>
+          <p className="text-2xl font-black text-amber-400">
+            {isLoadingApps ? '...' : appStats.submitted}
+          </p>
         </div>
 
-        {/* CPU utilization */}
+        {/* Approved / Disbursed */}
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-2 relative overflow-hidden">
-          <div className="absolute top-4 right-4 text-purple-500/20"><Cpu className="h-8 w-8" /></div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">CPU Load Ratio</p>
-          <p className="text-2xl font-black text-white">18.4%</p>
+          <div className="absolute top-4 right-4 text-emerald-500/20"><CheckCircle2 className="h-8 w-8" /></div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Approved / Disbursed</p>
+          <p className="text-2xl font-black text-emerald-400">
+            {isLoadingApps ? '...' : appStats.approved}
+          </p>
         </div>
 
-        {/* Space limits */}
+        {/* Rejected */}
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-2 relative overflow-hidden">
-          <div className="absolute top-4 right-4 text-amber-500/20"><HardDrive className="h-8 w-8" /></div>
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Storage Capacity</p>
-          <p className="text-2xl font-black text-white">34.2%</p>
+          <div className="absolute top-4 right-4 text-red-500/20"><XCircle className="h-8 w-8" /></div>
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Rejected</p>
+          <p className="text-2xl font-black text-red-400">
+            {isLoadingApps ? '...' : appStats.rejected}
+          </p>
         </div>
 
       </div>
@@ -89,7 +143,7 @@ export default function AdminDashboard() {
         <div className="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
           <h2 className="text-lg font-bold text-white border-b border-slate-800 pb-3 flex items-center gap-2">
             <Terminal className="h-5 w-5 text-blue-500" />
-            Live System Event Console
+            Recent Application Activity
           </h2>
 
           <div className="space-y-4">
@@ -115,11 +169,14 @@ export default function AdminDashboard() {
             Quick Actions
           </h2>
           <div className="flex flex-col gap-2">
+            <button onClick={() => navigate(PATHS.ADMIN_USERS)} className="w-full text-left p-3 rounded-lg bg-slate-950/60 border border-slate-850 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-all">
+              Manage User Accounts
+            </button>
             <button onClick={() => navigate(PATHS.ADMIN_AUDIT_TRAIL)} className="w-full text-left p-3 rounded-lg bg-slate-950/60 border border-slate-850 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-all">
               Search Immutable Audit Trail Logs
             </button>
-            <button className="w-full text-left p-3 rounded-lg bg-slate-950/60 border border-slate-850 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-all">
-              Backup Application Database Configuration
+            <button onClick={fetchApplicationStats} className="w-full text-left p-3 rounded-lg bg-slate-950/60 border border-slate-850 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-all">
+              Refresh Application Statistics
             </button>
           </div>
         </div>

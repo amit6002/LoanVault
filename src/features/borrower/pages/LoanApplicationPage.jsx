@@ -182,21 +182,7 @@ export default function LoanApplicationPage() {
         monthlyIncome: formData.income,
       };
 
-      const res = await api.post('/api/applications', payload);
-
-      // Save fallback in localStorage so UI renders immediately
-      const savedAppsString = localStorage.getItem('lms_applications') || '[]';
-      const savedApps = JSON.parse(savedAppsString);
-      savedApps.unshift({
-        id: res.data?.referenceId || `APP-2026-${Math.floor(10000 + Math.random() * 90000)}`,
-        type: formData.productType,
-        amount: formData.amount,
-        tenureMonths: formData.tenureMonths,
-        status: 'SUBMITTED',
-        appliedDate: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-        remarks: 'Application submitted successfully to backend.',
-      });
-      localStorage.setItem('lms_applications', JSON.stringify(savedApps));
+      await api.post('/api/applications', payload);
 
       setStep(7); // Move to final success step
     } catch (err) {

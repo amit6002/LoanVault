@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Landmark, FileText, CheckCircle2, AlertTriangle, Eye, ShieldCheck, UserCheck, ChevronRight, CheckSquare, Sparkles } from 'lucide-react';
+import { Landmark, FileText, CheckCircle2, AlertTriangle, Eye, ShieldCheck, UserCheck, ChevronRight, CheckSquare, Sparkles, XCircle } from 'lucide-react';
 import { PATHS, STATUS_CONFIG, DOCUMENT_TYPE_LABELS } from '../../../utils/constants';
-import { MOCK_APPLICATIONS } from '../../../data/mockLoans';
 import { formatCurrency } from '../../../utils/formatters';
 import { api } from '../../../api/apiClient';
 import Button from '../../../components/common/Button';
@@ -19,6 +18,7 @@ export default function ApplicationQueuePage() {
   const [selectedApp, setSelectedApp] = useState(null);
   const [applications, setApplications] = useState([]);
   const [isLoadingQueue, setIsLoadingQueue] = useState(true);
+  const [error, setError] = useState(null);
   
   // Custom states for document & credit verification
   const [docsVerified, setDocsVerified] = useState({
@@ -39,49 +39,34 @@ export default function ApplicationQueuePage() {
 
   const fetchQueue = async () => {
     setIsLoadingQueue(true);
+    setError(null);
     try {
-      // 1. Call Spring Boot API
+      // Fetch from Spring Boot API — single source of truth
       const data = await api.get('/api/applications/queue');
-      
-      // Combine with local applications if array returned
-      const localApps = JSON.parse(localStorage.getItem('lms_applications') || '[]');
-      const combined = [...data, ...localApps, ...MOCK_APPLICATIONS];
 
-      // Remove duplicate reference IDs
-      const uniqueMap = new Map();
-      combined.forEach(item => {
-        const id = item.referenceId || item.id;
-        if (!uniqueMap.has(id)) {
-          uniqueMap.set(id, {
-            id: id,
-            dbId: item.id,
-            type: item.loanType || item.type || 'PERSONAL',
-            amount: item.loanAmount || item.amount || 500000,
-            tenureMonths: item.tenureMonths || 36,
-            appliedDate: item.appliedAt ? new Date(item.appliedAt).toLocaleDateString('en-IN') : (item.appliedDate || '19 Jul 2026'),
-            status: item.status || 'SUBMITTED',
-            fullName: item.fullName || 'Borrower Account',
-            panNumber: item.panNumber || 'ABCDE1234F',
-            employmentType: item.employmentType || 'SALARIED',
-            employerName: item.employerName || 'Private Enterprise',
-            monthlyIncome: item.monthlyIncome || 95000,
-            cibilScore: item.cibilScore || null,
-          });
-        }
-      });
-
-      const queueList = Array.from(uniqueMap.values()).filter(
-        app => app.status === 'SUBMITTED' || app.status === 'DOC_VERIFICATION' || app.status === 'CREDIT_CHECK'
-      );
+      const queueList = (Array.isArray(data) ? data : []).map(item => ({
+        id: item.referenceId || item.id,
+        dbId: item.id,  // Always the numeric database ID
+        type: item.loanType || 'PERSONAL',
+        amount: item.loanAmount || 0,
+        tenureMonths: item.tenureMonths || 0,
+        appliedDate: item.appliedAt
+          ? new Date(item.appliedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+          : 'N/A',
+        status: item.status || 'SUBMITTED',
+        fullName: item.fullName || (item.borrower?.name) || 'Borrower',
+        panNumber: item.panNumber || 'N/A',
+        employmentType: item.employmentType || 'SALARIED',
+        employerName: item.employerName || 'N/A',
+        monthlyIncome: item.monthlyIncome || 0,
+        cibilScore: item.cibilScore || null,
+      }));
 
       setApplications(queueList);
     } catch (err) {
-      console.warn('Backend offline, using local queue data');
-      const localApps = JSON.parse(localStorage.getItem('lms_applications') || '[]');
-      const fallback = [...localApps, ...MOCK_APPLICATIONS].filter(
-        app => app.status === 'SUBMITTED' || app.status === 'DOC_VERIFICATION' || app.status === 'CREDIT_CHECK'
-      );
-      setApplications(fallback);
+      console.error('Failed to fetch officer queue:', err);
+      setError('Unable to connect to the server. Please check your connection and try again.');
+      setApplications([]);
     } finally {
       setIsLoadingQueue(false);
     }
@@ -111,42 +96,17 @@ export default function ApplicationQueuePage() {
     setActionLoading(true);
 
     try {
-      const statusToSet = recommendationType === 'APPROVE' ? 'RECOMMENDED_APPROVE' : 'RECOMMENDED_REJECT';
       const remarks = officerNotes || (recommendationType === 'APPROVE'
         ? `Verified by Loan Officer. CIBIL score: ${cibilScore || 780}. Approved for manager sanction.`
         : 'Rejected due to document discrepancies.');
 
-      // Try calling backend API
-      if (selectedApp.dbId && typeof selectedApp.dbId === 'number') {
-        await api.put(`/api/applications/${selectedApp.dbId}/recommend`, {
-          recommendation: recommendationType,
-          remarks: remarks,
-        });
-      }
+      // Call backend API — single source of truth
+      await api.put(`/api/applications/${selectedApp.dbId}/recommend`, {
+        recommendation: recommendationType,
+        remarks: remarks,
+      });
 
-      // Update localStorage for seamless offline sync
-      const savedApps = JSON.parse(localStorage.getItem('lms_applications') || '[]');
-      const existIdx = savedApps.findIndex(a => a.id === selectedApp.id);
-      if (existIdx !== -1) {
-        savedApps[existIdx].status = statusToSet;
-        savedApps[existIdx].remarks = remarks;
-        savedApps[existIdx].cibilScore = cibilScore || 780;
-        localStorage.setItem('lms_applications', JSON.stringify(savedApps));
-      } else {
-        savedApps.unshift({
-          id: selectedApp.id,
-          type: selectedApp.type,
-          amount: selectedApp.amount,
-          tenureMonths: selectedApp.tenureMonths,
-          status: statusToSet,
-          appliedDate: selectedApp.appliedDate,
-          remarks: remarks,
-          cibilScore: cibilScore || 780,
-        });
-        localStorage.setItem('lms_applications', JSON.stringify(savedApps));
-      }
-
-      // Update local state list
+      // Update local state list — remove from queue since it's now recommended
       setApplications(prev => prev.filter(a => a.id !== selectedApp.id));
       setSelectedApp(null);
     } catch (err) {
@@ -167,6 +127,23 @@ export default function ApplicationQueuePage() {
         <p className="text-sm text-slate-400 mt-1">Review KYC files, manually inspect documents, evaluate credit reports, and forward proposals to Loan Managers.</p>
       </div>
 
+      {/* Error banner */}
+      {error && (
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 flex items-start gap-3">
+          <XCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold">Connection Error</p>
+            <p className="text-xs text-red-400/80 mt-1">{error}</p>
+            <button
+              onClick={fetchQueue}
+              className="text-xs text-red-300 underline mt-2 hover:text-white transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* LEFT CONTAINER: Queue grid (7 columns) */}
@@ -176,7 +153,7 @@ export default function ApplicationQueuePage() {
               <div className="h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
               <p className="text-xs">Fetching pending underwriting queue from Spring Boot backend...</p>
             </div>
-          ) : applications.length === 0 ? (
+          ) : applications.length === 0 && !error ? (
             <div className="bg-slate-900 border border-slate-850 p-10 rounded-2xl text-center space-y-4">
               <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto animate-bounce" />
               <h3 className="text-lg font-bold text-white">Queue completely cleared!</h3>

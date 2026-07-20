@@ -1,5 +1,6 @@
 package com.loanvault.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,13 +29,15 @@ public class LoanApplication {
     private String referenceId;
 
     // The borrower who submitted this application
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "borrower_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "authorities"})
     private User borrower;
 
     // Officer assigned to verify this application
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "assigned_officer_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "authorities"})
     private User assignedOfficer;
 
     // ---- Step 1: Loan Details ----

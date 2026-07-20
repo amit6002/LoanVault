@@ -28,6 +28,9 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
     // Count by status for dashboard metrics
     long countByStatus(Status status);
 
+    // All applications for admin view
+    List<LoanApplication> findAllByOrderByAppliedAtDesc();
+
     // Paginated audit search
     Page<LoanApplication> findByBorrower(User borrower, Pageable pageable);
 }

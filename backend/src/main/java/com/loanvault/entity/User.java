@@ -1,5 +1,7 @@
 package com.loanvault.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -21,6 +23,7 @@ import java.util.List;
 @Entity
 @Table(name = "users",
     uniqueConstraints = @UniqueConstraint(columnNames = "email"))
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Getter @Setter @Builder
 @NoArgsConstructor @AllArgsConstructor
 public class User implements UserDetails {
@@ -36,6 +39,7 @@ public class User implements UserDetails {
     private String email;
 
     // Nullable — Google OAuth2 users don't have a password
+    @JsonIgnore
     @Column
     private String password;
 

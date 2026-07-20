@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Landmark, FileText, CheckCircle2, AlertTriangle, Eye, ShieldCheck, BadgeAlert, Coins, Sparkles, UserCheck } from 'lucide-react';
+import { Landmark, FileText, CheckCircle2, AlertTriangle, Eye, ShieldCheck, BadgeAlert, Coins, Sparkles, UserCheck, XCircle } from 'lucide-react';
 import { PATHS, STATUS_CONFIG } from '../../../utils/constants';
-import { MOCK_APPLICATIONS } from '../../../data/mockLoans';
 import { formatCurrency } from '../../../utils/formatters';
 import { api } from '../../../api/apiClient';
 import Button from '../../../components/common/Button';
@@ -18,6 +17,7 @@ export default function ApprovalQueuePage() {
   const [selectedApp, setSelectedApp] = useState(null);
   const [applications, setApplications] = useState([]);
   const [isLoadingQueue, setIsLoadingQueue] = useState(true);
+  const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [managerNotes, setManagerNotes] = useState('');
 
@@ -27,45 +27,32 @@ export default function ApprovalQueuePage() {
 
   const fetchApprovalQueue = async () => {
     setIsLoadingQueue(true);
+    setError(null);
     try {
-      // 1. Call Spring Boot API
+      // Fetch from Spring Boot API — single source of truth
       const data = await api.get('/api/applications/approval-queue');
-      
-      const localApps = JSON.parse(localStorage.getItem('lms_applications') || '[]');
-      const combined = [...data, ...localApps, ...MOCK_APPLICATIONS];
 
-      const uniqueMap = new Map();
-      combined.forEach(item => {
-        const id = item.referenceId || item.id;
-        if (!uniqueMap.has(id)) {
-          uniqueMap.set(id, {
-            id: id,
-            dbId: item.id,
-            type: item.loanType || item.type || 'PERSONAL',
-            amount: item.loanAmount || item.amount || 500000,
-            tenureMonths: item.tenureMonths || 36,
-            appliedDate: item.appliedAt ? new Date(item.appliedAt).toLocaleDateString('en-IN') : (item.appliedDate || '19 Jul 2026'),
-            status: item.status || 'RECOMMENDED_APPROVE',
-            fullName: item.fullName || 'Borrower Account',
-            panNumber: item.panNumber || 'ABCDE1234F',
-            officerRemarks: item.officerRemarks || item.remarks || 'Verified by Loan Officer. All 3 KYC documents match.',
-            cibilScore: item.cibilScore || 785,
-          });
-        }
-      });
+      const queueList = (Array.isArray(data) ? data : []).map(item => ({
+        id: item.referenceId || item.id,
+        dbId: item.id,  // Always the numeric database ID
+        type: item.loanType || 'PERSONAL',
+        amount: item.loanAmount || 0,
+        tenureMonths: item.tenureMonths || 0,
+        appliedDate: item.appliedAt
+          ? new Date(item.appliedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+          : 'N/A',
+        status: item.status || 'RECOMMENDED_APPROVE',
+        fullName: item.fullName || (item.borrower?.name) || 'Borrower',
+        panNumber: item.panNumber || 'N/A',
+        officerRemarks: item.officerRemarks || 'Verified by Loan Officer.',
+        cibilScore: item.cibilScore || null,
+      }));
 
-      const queueList = Array.from(uniqueMap.values()).filter(
-        app => app.status === 'RECOMMENDED_APPROVE' || app.status === 'RECOMMENDED_REJECT'
-      );
-
-      setApplications(queueList.length > 0 ? queueList : Array.from(uniqueMap.values()).slice(0, 3));
+      setApplications(queueList);
     } catch (err) {
-      console.warn('Backend offline, using local approval queue data');
-      const localApps = JSON.parse(localStorage.getItem('lms_applications') || '[]');
-      const fallback = [...localApps, ...MOCK_APPLICATIONS].filter(
-        app => app.status === 'RECOMMENDED_APPROVE' || app.status === 'RECOMMENDED_REJECT'
-      );
-      setApplications(fallback.length > 0 ? fallback : MOCK_APPLICATIONS);
+      console.error('Failed to fetch approval queue:', err);
+      setError('Unable to connect to the server. Please check your connection and try again.');
+      setApplications([]);
     } finally {
       setIsLoadingQueue(false);
     }
@@ -76,41 +63,20 @@ export default function ApprovalQueuePage() {
     setActionLoading(true);
 
     try {
-      const newStatus = decisionType === 'APPROVE' ? 'APPROVED' : 'REJECTED';
       const remarks = managerNotes || (decisionType === 'APPROVE'
         ? 'Sanctioned by Loan Manager. Funds authorized for immediate disbursement.'
         : 'Rejected by Manager after risk review.');
 
-      // Try calling backend API
-      if (selectedApp.dbId && typeof selectedApp.dbId === 'number') {
-        const endpoint = decisionType === 'APPROVE' 
-          ? `/api/applications/${selectedApp.dbId}/approve`
-          : `/api/applications/${selectedApp.dbId}/reject`;
-        await api.put(endpoint, { remarks });
-      }
+      // Call backend API — single source of truth
+      const endpoint = decisionType === 'APPROVE' 
+        ? `/api/applications/${selectedApp.dbId}/approve`
+        : `/api/applications/${selectedApp.dbId}/reject`;
+      await api.put(endpoint, { remarks });
 
-      // Update localStorage so Borrower dashboard reflects instantly
-      const savedApps = JSON.parse(localStorage.getItem('lms_applications') || '[]');
-      const existIdx = savedApps.findIndex(a => a.id === selectedApp.id);
-      if (existIdx !== -1) {
-        savedApps[existIdx].status = newStatus;
-        savedApps[existIdx].remarks = remarks;
-        localStorage.setItem('lms_applications', JSON.stringify(savedApps));
-      } else {
-        savedApps.unshift({
-          id: selectedApp.id,
-          type: selectedApp.type,
-          amount: selectedApp.amount,
-          tenureMonths: selectedApp.tenureMonths,
-          status: newStatus,
-          appliedDate: selectedApp.appliedDate,
-          remarks: remarks,
-        });
-        localStorage.setItem('lms_applications', JSON.stringify(savedApps));
-      }
-
+      // Update local state list — remove from queue since decision is made
       setApplications(prev => prev.filter(a => a.id !== selectedApp.id));
       setSelectedApp(null);
+      setManagerNotes('');
     } catch (err) {
       alert(err.message || 'Failed to update sanction status.');
     } finally {
@@ -127,6 +93,23 @@ export default function ApprovalQueuePage() {
         <p className="text-sm text-slate-400 mt-1">Audit final officer recommendations, review credit profiles, and issue sanction disbursements.</p>
       </div>
 
+      {/* Error banner */}
+      {error && (
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 flex items-start gap-3">
+          <XCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold">Connection Error</p>
+            <p className="text-xs text-red-400/80 mt-1">{error}</p>
+            <button
+              onClick={fetchApprovalQueue}
+              className="text-xs text-red-300 underline mt-2 hover:text-white transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* LEFT CONTAINER: Queue list (7 columns) */}
@@ -136,7 +119,7 @@ export default function ApprovalQueuePage() {
               <div className="h-6 w-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto" />
               <p className="text-xs">Fetching officer proposals from Spring Boot backend...</p>
             </div>
-          ) : applications.length === 0 ? (
+          ) : applications.length === 0 && !error ? (
             <div className="bg-slate-900 border border-slate-850 p-10 rounded-2xl text-center space-y-4">
               <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto animate-bounce" />
               <h3 className="text-lg font-bold text-white">Queue cleared!</h3>
@@ -152,7 +135,7 @@ export default function ApprovalQueuePage() {
               return (
                 <div
                   key={app.id}
-                  onClick={() => setSelectedApp(app)}
+                  onClick={() => { setSelectedApp(app); setManagerNotes(''); }}
                   className={`p-5 rounded-xl border transition-all duration-200 cursor-pointer flex justify-between items-center ${
                     isSelected 
                       ? 'bg-slate-900/80 border-purple-600 shadow-md ring-1 ring-purple-500/50' 
@@ -208,7 +191,7 @@ export default function ApprovalQueuePage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-semibold">CIBIL Bureau Score</span>
-                  <span className="text-emerald-400 font-bold">{selectedApp.cibilScore || 785} (Excellent)</span>
+                  <span className="text-emerald-400 font-bold">{selectedApp.cibilScore || 'Not Pulled'}</span>
                 </div>
               </div>
 

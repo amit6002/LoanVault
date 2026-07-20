@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { Landmark, FileText, CheckCircle2, Clock, ShieldAlert, AlertTriangle, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '../../../utils/constants';
+import { api } from '../../../api/apiClient';
 import Button from '../../../components/common/Button';
 
 /**
@@ -14,6 +16,25 @@ export default function OfficerDashboard() {
   const navigate = useNavigate();
   const session = JSON.parse(localStorage.getItem('lms_session') || '{}');
   const officerName = session.name || 'Officer';
+
+  const [pendingCount, setPendingCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPendingQueueCount();
+  }, []);
+
+  const fetchPendingQueueCount = async () => {
+    setIsLoading(true);
+    try {
+      const data = await api.get('/api/applications/queue');
+      setPendingCount(Array.isArray(data) ? data.length : 0);
+    } catch (err) {
+      console.warn('Failed to fetch queue count for officer dashboard:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -49,14 +70,16 @@ export default function OfficerDashboard() {
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-2 relative overflow-hidden">
           <div className="absolute top-4 right-4 text-blue-500/20"><Clock className="h-8 w-8" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending Verification</p>
-          <p className="text-2xl font-black text-white">14 Cases</p>
+          <p className="text-2xl font-black text-white">
+            {isLoading ? '...' : `${pendingCount} Cases`}
+          </p>
         </div>
 
         {/* SLA Nearing Expiry */}
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-2 relative overflow-hidden">
           <div className="absolute top-4 right-4 text-amber-500/20"><AlertTriangle className="h-8 w-8" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">SLA Nearing Expiry</p>
-          <p className="text-2xl font-black text-amber-500">3 Cases</p>
+          <p className="text-2xl font-black text-amber-500">0 Cases</p>
         </div>
 
         {/* Verified Today */}

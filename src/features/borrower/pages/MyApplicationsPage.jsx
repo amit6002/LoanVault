@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Landmark, Plus, FileText, CheckCircle2, Clock, XCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 import { PATHS, STATUS_CONFIG } from '../../../utils/constants';
-import { MOCK_APPLICATIONS } from '../../../data/mockLoans';
 import { formatCurrency } from '../../../utils/formatters';
 import { api } from '../../../api/apiClient';
 import Button from '../../../components/common/Button';
@@ -18,6 +17,7 @@ import Button from '../../../components/common/Button';
 export default function MyApplicationsPage() {
   const [applications, setApplications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,36 +26,28 @@ export default function MyApplicationsPage() {
 
   const fetchMyApplications = async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      // 1. Call Spring Boot API for borrower's applications
+      // Fetch from Spring Boot API — single source of truth
       const data = await api.get('/api/applications/my');
-      
-      const savedApps = JSON.parse(localStorage.getItem('lms_applications') || '[]');
-      const combined = [...data, ...savedApps, ...MOCK_APPLICATIONS];
 
-      // Deduplicate by ID
-      const uniqueMap = new Map();
-      combined.forEach(item => {
-        const id = item.referenceId || item.id;
-        if (!uniqueMap.has(id)) {
-          uniqueMap.set(id, {
-            id: id,
-            type: item.loanType || item.type || 'PERSONAL',
-            amount: item.loanAmount || item.amount || 500000,
-            tenureMonths: item.tenureMonths || 36,
-            status: item.status || 'SUBMITTED',
-            appliedDate: item.appliedAt ? new Date(item.appliedAt).toLocaleDateString('en-IN') : (item.appliedDate || '19 Jul 2026'),
-            remarks: item.managerRemarks || item.officerRemarks || item.remarks || 'Application under evaluation.',
-          });
-        }
-      });
+      const formatted = (Array.isArray(data) ? data : []).map(item => ({
+        id: item.referenceId || item.id,
+        type: item.loanType || 'PERSONAL',
+        amount: item.loanAmount || 0,
+        tenureMonths: item.tenureMonths || 0,
+        status: item.status || 'SUBMITTED',
+        appliedDate: item.appliedAt
+          ? new Date(item.appliedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+          : 'N/A',
+        remarks: item.managerRemarks || item.officerRemarks || 'Application under evaluation.',
+      }));
 
-      setApplications(Array.from(uniqueMap.values()));
+      setApplications(formatted);
     } catch (err) {
-      console.warn('Backend offline, loading local applications');
-      const savedApps = JSON.parse(localStorage.getItem('lms_applications') || '[]');
-      const fallback = [...savedApps, ...MOCK_APPLICATIONS];
-      setApplications(fallback);
+      console.error('Failed to fetch applications:', err);
+      setError('Unable to connect to the server. Please check your connection and try again.');
+      setApplications([]);
     } finally {
       setIsLoading(false);
     }
@@ -79,13 +71,30 @@ export default function MyApplicationsPage() {
         </Button>
       </div>
 
+      {/* Error banner */}
+      {error && (
+        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 flex items-start gap-3">
+          <XCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold">Connection Error</p>
+            <p className="text-xs text-red-400/80 mt-1">{error}</p>
+            <button
+              onClick={fetchMyApplications}
+              className="text-xs text-red-300 underline mt-2 hover:text-white transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Applications list */}
       {isLoading ? (
         <div className="p-8 text-center text-slate-400 font-medium space-y-2 bg-slate-900/30 rounded-xl border border-slate-800">
           <div className="h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-xs">Fetching your active loan applications from database...</p>
         </div>
-      ) : applications.length === 0 ? (
+      ) : applications.length === 0 && !error ? (
         <div className="bg-slate-900/40 border border-slate-900 p-12 rounded-2xl text-center space-y-4">
           <FileText className="h-12 w-12 text-slate-600 mx-auto" />
           <h3 className="text-lg font-bold text-white">No active applications found</h3>

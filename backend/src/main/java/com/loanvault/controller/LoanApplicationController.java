@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.springframework.transaction.annotation.Transactional;
+
 /**
  * ============================================================
  * LOAN APPLICATION CONTROLLER
@@ -93,6 +95,7 @@ public class LoanApplicationController {
      */
     @GetMapping("/my")
     @PreAuthorize("hasRole('BORROWER')")
+    @Transactional(readOnly = true)
     public ResponseEntity<List<LoanApplication>> getMyApplications(
         @AuthenticationPrincipal User currentUser
     ) {
@@ -108,6 +111,7 @@ public class LoanApplicationController {
      */
     @GetMapping("/queue")
     @PreAuthorize("hasRole('OFFICER')")
+    @Transactional(readOnly = true)
     public ResponseEntity<List<LoanApplication>> getVerificationQueue() {
         List<LoanApplication.Status> pendingStatuses = List.of(
             LoanApplication.Status.SUBMITTED,
@@ -158,6 +162,7 @@ public class LoanApplicationController {
      */
     @GetMapping("/approval-queue")
     @PreAuthorize("hasRole('MANAGER')")
+    @Transactional(readOnly = true)
     public ResponseEntity<List<LoanApplication>> getApprovalQueue() {
         return ResponseEntity.ok(
             applicationRepository.findByStatusOrderByAppliedAtAsc(
@@ -213,5 +218,19 @@ public class LoanApplicationController {
             "LoanApplication", app.getReferenceId(), "Loan rejected by manager");
 
         return ResponseEntity.ok(ApiResponse.success("Application rejected."));
+    }
+
+    // ===================== ADMIN ENDPOINTS =====================
+
+    /**
+     * Admin: Get all loan applications across all statuses.
+     */
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<LoanApplication>> getAllApplications() {
+        return ResponseEntity.ok(
+            applicationRepository.findAllByOrderByAppliedAtDesc()
+        );
     }
 }

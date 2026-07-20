@@ -52,7 +52,7 @@ export default function MyLoansPage() {
   };
 
   const selectedLoan = loans.find(l => l.id === activeTab) || loans[0];
-  const activeTxns = transactions[selectedTabId => selectedLoan.id] || transactions[selectedLoan.id];
+  const activeTxns = transactions[selectedLoan.id] || [];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">

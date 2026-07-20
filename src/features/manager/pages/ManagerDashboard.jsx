@@ -1,7 +1,9 @@
+import { useState, useEffect } from 'react';
 import { Landmark, BadgeAlert, FileText, CheckCircle2, TrendingUp, AlertTriangle, UserCheck, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PATHS } from '../../../utils/constants';
 import { formatCurrency } from '../../../utils/formatters';
+import { api } from '../../../api/apiClient';
 import Button from '../../../components/common/Button';
 
 /**
@@ -14,6 +16,25 @@ export default function ManagerDashboard() {
   const navigate = useNavigate();
   const session = JSON.parse(localStorage.getItem('lms_session') || '{}');
   const managerName = session.name || 'Manager';
+
+  const [pendingCount, setPendingCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPendingApprovalCount();
+  }, []);
+
+  const fetchPendingApprovalCount = async () => {
+    setIsLoading(true);
+    try {
+      const data = await api.get('/api/applications/approval-queue');
+      setPendingCount(Array.isArray(data) ? data.length : 0);
+    } catch (err) {
+      console.warn('Failed to fetch approval queue count for manager dashboard:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -56,7 +77,9 @@ export default function ManagerDashboard() {
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-xl space-y-2 relative overflow-hidden">
           <div className="absolute top-4 right-4 text-blue-500/20"><BadgeAlert className="h-8 w-8" /></div>
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending Sanction</p>
-          <p className="text-2xl font-black text-blue-400">8 Cases</p>
+          <p className="text-2xl font-black text-blue-400">
+            {isLoading ? '...' : `${pendingCount} Cases`}
+          </p>
         </div>
 
         {/* Disbursed This Month */}
