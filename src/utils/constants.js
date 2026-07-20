@@ -187,19 +187,19 @@ export const STATUS_CONFIG = {
   },
   [APPLICATION_STATUS.APPROVED]: {
     label: 'Approved',
-    color: 'bg-emerald-100 text-emerald-700',
+    color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
   },
   [APPLICATION_STATUS.REJECTED]: {
     label: 'Rejected',
-    color: 'bg-red-100 text-red-700',
+    color: 'bg-red-500/10 text-red-400 border border-red-500/20',
   },
   [APPLICATION_STATUS.DISBURSEMENT_PENDING]: {
-    label: 'Approved (Pending Disbursement)',
-    color: 'bg-cyan-100 text-cyan-700',
+    label: 'Approved',
+    color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
   },
   [APPLICATION_STATUS.DISBURSED]: {
-    label: 'Approved & Disbursed',
-    color: 'bg-emerald-100 text-emerald-700',
+    label: 'Approved',
+    color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
   },
   [APPLICATION_STATUS.CANCELLED]: {
     label: 'Cancelled',

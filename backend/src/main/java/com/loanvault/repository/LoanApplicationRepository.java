@@ -20,6 +20,9 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
     // Borrower: get all their applications
     List<LoanApplication> findByBorrowerOrderByAppliedAtDesc(User borrower);
 
+    // Borrower: get approved applications
+    List<LoanApplication> findByBorrowerAndStatusInOrderByAppliedAtDesc(User borrower, List<Status> statuses);
+
     // Officer: get pending verification queue
     List<LoanApplication> findByStatusInOrderByAppliedAtAsc(List<Status> statuses);
 
@@ -36,6 +39,9 @@ public interface LoanApplicationRepository extends JpaRepository<LoanApplication
 
     @Query("SELECT COALESCE(SUM(a.loanAmount), 0) FROM LoanApplication a WHERE a.status IN :statuses")
     BigDecimal sumLoanAmountByStatusIn(@Param("statuses") List<Status> statuses);
+
+    @Query("SELECT COALESCE(SUM(a.loanAmount), 0) FROM LoanApplication a WHERE a.borrower = :borrower AND a.status IN :statuses")
+    BigDecimal sumLoanAmountByBorrowerAndStatusIn(@Param("borrower") User borrower, @Param("statuses") List<Status> statuses);
 
     // Paginated audit search
     Page<LoanApplication> findByBorrower(User borrower, Pageable pageable);
