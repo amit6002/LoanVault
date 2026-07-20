@@ -194,12 +194,12 @@ export const STATUS_CONFIG = {
     color: 'bg-red-100 text-red-700',
   },
   [APPLICATION_STATUS.DISBURSEMENT_PENDING]: {
-    label: 'Disbursement Pending',
+    label: 'Approved (Pending Disbursement)',
     color: 'bg-cyan-100 text-cyan-700',
   },
   [APPLICATION_STATUS.DISBURSED]: {
-    label: 'Disbursed',
-    color: 'bg-green-100 text-green-700',
+    label: 'Approved & Disbursed',
+    color: 'bg-emerald-100 text-emerald-700',
   },
   [APPLICATION_STATUS.CANCELLED]: {
     label: 'Cancelled',
