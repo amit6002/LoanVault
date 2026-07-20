@@ -10,8 +10,7 @@ import Button from '../../../components/common/Button';
 /**
  * ============================================================
  * BORROWER DASHBOARD COMPONENT
- * 1-to-1 visual fidelity matching Image 1 mockup.
- * Connected dynamically to loanStore for real-time portfolio updates.
+ * QUICK ACTIONS section placed AT THE TOP where Welcome back banner was.
  * ============================================================
  */
 export default function BorrowerDashboard() {
@@ -84,25 +83,94 @@ export default function BorrowerDashboard() {
         </div>
       )}
 
-      {/* 1. Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            Welcome back, {userProfile?.name || borrowerName} 👋
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Here's your loan overview and important updates.
-          </p>
-        </div>
+      {/* 1. QUICK ACTIONS BAR AT THE VERY TOP (REPLACED WELCOME BANNER) */}
+      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
+        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+          QUICK ACTIONS
+        </h2>
 
-        <div className="flex items-center gap-3">
-          <Button
-            variant="primary"
-            leftIcon={Plus}
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-xs">
+          
+          <button
             onClick={() => navigate(PATHS.BORROWER_APPLY)}
+            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-blue-500/50 rounded-xl flex items-center justify-between group transition-all"
           >
-            Apply for New Loan
-          </Button>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
+                <Plus className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-white">Apply for Loan</p>
+                <p className="text-[10px] text-slate-500">Get started now</p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
+          </button>
+
+          <button
+            onClick={() => navigate(PATHS.BORROWER_EMI_CALENDAR)}
+            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-emerald-500/50 rounded-xl flex items-center justify-between group transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                <CreditCard className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-white">Pay EMI</p>
+                <p className="text-[10px] text-slate-500">Make a payment</p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
+          </button>
+
+          <button
+            onClick={() => navigate(PATHS.BORROWER_STATEMENTS)}
+            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-purple-500/50 rounded-xl flex items-center justify-between group transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
+                <Download className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-white">Download Statement</p>
+                <p className="text-[10px] text-slate-500">View loan statements</p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
+          </button>
+
+          <button
+            onClick={() => navigate(PATHS.BORROWER_DOCUMENTS)}
+            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-amber-500/50 rounded-xl flex items-center justify-between group transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg">
+                <Upload className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-white">Upload Documents</p>
+                <p className="text-[10px] text-slate-500">Submit documents</p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
+          </button>
+
+          <button
+            onClick={() => navigate(PATHS.BORROWER_PROFILE)}
+            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-teal-500/50 rounded-xl flex items-center justify-between group transition-all"
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-teal-500/10 text-teal-400 rounded-lg">
+                <HelpCircle className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-white">Raise a Query</p>
+                <p className="text-[10px] text-slate-500">We're here to help</p>
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
+          </button>
+
         </div>
       </div>
 
@@ -176,13 +244,13 @@ export default function BorrowerDashboard() {
               <path
                 d="M 10 50 A 40 40 0 0 1 90 50"
                 fill="none"
-                stroke="url(#gradientGaugeDashboard)"
+                stroke="url(#gradientGaugeDashboardTop)"
                 strokeWidth="10"
                 strokeDasharray="125 125"
                 strokeLinecap="round"
               />
               <defs>
-                <linearGradient id="gradientGaugeDashboard" x1="0%" y1="0%" x2="100%" y2="0%">
+                <linearGradient id="gradientGaugeDashboardTop" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="#ef4444" />
                   <stop offset="50%" stopColor="#eab308" />
                   <stop offset="100%" stopColor="#10b981" />
@@ -342,97 +410,6 @@ export default function BorrowerDashboard() {
           </div>
         </div>
 
-      </div>
-
-      {/* 4. QUICK ACTIONS BAR AT BOTTOM */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
-        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-          Quick Actions
-        </h2>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 gap-4 text-xs">
-          
-          <button
-            onClick={() => navigate(PATHS.BORROWER_APPLY)}
-            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-blue-500/50 rounded-xl flex items-center justify-between group transition-all"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
-                <Plus className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <p className="font-bold text-white">Apply for Loan</p>
-                <p className="text-[10px] text-slate-500">Get started now</p>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
-          </button>
-
-          <button
-            onClick={() => navigate(PATHS.BORROWER_EMI_CALENDAR)}
-            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-emerald-500/50 rounded-xl flex items-center justify-between group transition-all"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
-                <CreditCard className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <p className="font-bold text-white">Pay EMI</p>
-                <p className="text-[10px] text-slate-500">Make a payment</p>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
-          </button>
-
-          <button
-            onClick={() => navigate(PATHS.BORROWER_STATEMENTS)}
-            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-purple-500/50 rounded-xl flex items-center justify-between group transition-all"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
-                <Download className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <p className="font-bold text-white">Download Statement</p>
-                <p className="text-[10px] text-slate-500">View loan statements</p>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
-          </button>
-
-          <button
-            onClick={() => navigate(PATHS.BORROWER_DOCUMENTS)}
-            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-amber-500/50 rounded-xl flex items-center justify-between group transition-all"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg">
-                <Upload className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <p className="font-bold text-white">Upload Documents</p>
-                <p className="text-[10px] text-slate-500">Submit documents</p>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
-          </button>
-
-          <button
-            onClick={() => navigate(PATHS.BORROWER_PROFILE)}
-            className="p-4 bg-slate-950/60 border border-slate-800 hover:border-teal-500/50 rounded-xl flex items-center justify-between group transition-all"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-teal-500/10 text-teal-400 rounded-lg">
-                <HelpCircle className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <p className="font-bold text-white">Raise a Query</p>
-                <p className="text-[10px] text-slate-500">We're here to help</p>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-slate-500 group-hover:text-white transition-colors" />
-          </button>
-
-        </div>
       </div>
 
     </div>
