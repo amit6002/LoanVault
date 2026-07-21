@@ -90,6 +90,9 @@ async function request(endpoint, options = {}) {
     }
 
     if (!response.ok) {
+      if (response.status === 502 || response.status === 503) {
+        throw new Error('Backend server is starting up or offline. If running locally, please ensure Spring Boot is running on http://localhost:8080.');
+      }
       if (data && typeof data === 'object' && data.message) {
         throw new Error(data.message);
       }
@@ -104,7 +107,7 @@ async function request(endpoint, options = {}) {
   } catch (error) {
     console.error(`API Error [${endpoint}]:`, error);
     if (error.name === 'TypeError' || (error.message && error.message.includes('Failed to fetch'))) {
-      throw new Error('Unable to connect to LoanVault backend. Please verify your server or network status.');
+      throw new Error('Unable to connect to LoanVault backend (http://localhost:8080). Please start your local Spring Boot server with "mvn spring-boot:run" in the backend directory.');
     }
     throw error;
   }
