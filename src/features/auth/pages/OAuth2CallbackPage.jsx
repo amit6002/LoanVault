@@ -45,11 +45,11 @@ export default function OAuth2CallbackPage() {
   }, [searchParams, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-900">
       <div className="text-center space-y-4">
-        <div className="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
-        <h2 className="text-xl font-bold">Authenticating with Google...</h2>
-        <p className="text-xs text-slate-400">Finalizing your secure session ticket.</p>
+        <div className="h-10 w-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
+        <h2 className="text-xl font-black">Authenticating with Google...</h2>
+        <p className="text-xs text-slate-500 font-medium">Finalizing your secure session ticket.</p>
       </div>
     </div>
   );

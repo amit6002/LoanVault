@@ -8,7 +8,7 @@ import { EMPLOYMENT_TYPES } from '../../../utils/constants';
 
 /**
  * ============================================================
- * BORROWER PROFILE & SETTINGS PAGE COMPONENT
+ * BORROWER PROFILE & SETTINGS PAGE COMPONENT (LIGHT THEME)
  * Contains 3 structured tabs:
  *  1. Personal Info (Identity, Address, Income saved to Neon DB)
  *  2. Bank Account & Auto Debit (Fill/Update linked bank details)
@@ -106,10 +106,8 @@ export default function BorrowerProfilePage() {
     setErrorMsg('');
 
     try {
-      // Save profile to API
       const res = await api.put('/api/user/profile', profile).catch(() => ({ message: 'Profile updated locally' }));
       
-      // Save bank details to local storage
       localStorage.setItem('lms_user_bank_details', JSON.stringify({
         bankName: profile.bankName,
         accountNumber: profile.accountNumber,
@@ -136,21 +134,21 @@ export default function BorrowerProfilePage() {
     <div className="space-y-8 animate-in fade-in duration-300">
       
       {/* Page Header */}
-      <div className="border-b border-slate-800 pb-5">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Profile & Settings</h1>
-        <p className="text-sm text-slate-400 mt-1">
+      <div className="border-b border-slate-200 pb-5">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Profile & Settings</h1>
+        <p className="text-sm text-slate-500 mt-1">
           Manage your identity details, bank account linkage, and security preferences.
         </p>
       </div>
 
       {/* INCOMPLETE PROFILE WARNING BANNER */}
       {isIncomplete && !isLoading && (
-        <div className="p-5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between gap-4">
+        <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between gap-4 shadow-xs">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="h-6 w-6 text-amber-500 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-md font-bold text-amber-400">Profile & Bank Linkage Incomplete — Action Required</h3>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+              <h3 className="text-md font-bold text-amber-900">Profile & Bank Linkage Incomplete — Action Required</h3>
+              <p className="text-xs text-amber-800 mt-1 leading-relaxed font-medium">
                 Please complete your identity details and link a valid bank account to enable loan applications!
               </p>
             </div>
@@ -159,13 +157,13 @@ export default function BorrowerProfilePage() {
       )}
 
       {/* 2. Navigation Tabs */}
-      <div className="flex border-b border-slate-800 text-xs font-semibold gap-6 overflow-x-auto pb-1">
+      <div className="flex border-b border-slate-200 text-xs font-semibold gap-6 overflow-x-auto pb-1">
         {['Personal Info', 'Bank Account & Auto Debit', 'Security & Settings'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`pb-2 border-b-2 transition-all whitespace-nowrap ${
-              activeTab === tab ? 'border-blue-500 text-blue-400 font-bold' : 'border-transparent text-slate-400 hover:text-white'
+            className={`pb-2 border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === tab ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             {tab}
@@ -178,23 +176,23 @@ export default function BorrowerProfilePage() {
         <form onSubmit={handleSaveProfile} className="space-y-8">
           
           {successMsg && (
-            <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-sm text-emerald-400 flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5" />
+            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-sm text-emerald-800 flex items-center gap-2 font-medium">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
               <span>{successMsg}</span>
             </div>
           )}
 
           {errorMsg && (
-            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5" />
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-sm text-rose-800 flex items-center gap-2 font-medium">
+              <ShieldAlert className="h-5 w-5 text-rose-600" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {/* Section 1: Personal Identification */}
-          <div className="bg-slate-900/40 border border-slate-850 p-6 rounded-2xl space-y-6">
-            <h3 className="text-md font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <User className="h-5 w-5 text-blue-500" />
+          <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-6 shadow-xs">
+            <h3 className="text-md font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+              <User className="h-5 w-5 text-indigo-600" />
               Personal Identification
             </h3>
 
@@ -209,9 +207,9 @@ export default function BorrowerProfilePage() {
           </div>
 
           {/* Section 2: Address */}
-          <div className="bg-slate-900/40 border border-slate-850 p-6 rounded-2xl space-y-6">
-            <h3 className="text-md font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <Home className="h-5 w-5 text-purple-500" />
+          <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-6 shadow-xs">
+            <h3 className="text-md font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+              <Home className="h-5 w-5 text-purple-600" />
               Address Details
             </h3>
 
@@ -226,9 +224,9 @@ export default function BorrowerProfilePage() {
           </div>
 
           {/* Section 3: Employment & Income */}
-          <div className="bg-slate-900/40 border border-slate-850 p-6 rounded-2xl space-y-6">
-            <h3 className="text-md font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <Briefcase className="h-5 w-5 text-emerald-500" />
+          <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-6 shadow-xs">
+            <h3 className="text-md font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+              <Briefcase className="h-5 w-5 text-emerald-600" />
               Employment & Income Details
             </h3>
 
@@ -248,17 +246,17 @@ export default function BorrowerProfilePage() {
         </form>
       )}
 
-      {/* TAB 2: BANK ACCOUNT & AUTO DEBIT (EDITABLE BANK DETAILS) */}
+      {/* TAB 2: BANK ACCOUNT & AUTO DEBIT */}
       {activeTab === 'Bank Account & Auto Debit' && (
         <form onSubmit={handleSaveProfile} className="space-y-6">
-          <div className="bg-slate-900/40 border border-slate-850 p-6 rounded-2xl space-y-6">
-            <h3 className="text-md font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-              <Landmark className="h-5 w-5 text-blue-500" /> Primary Bank Account & NACH Auto-Debit Linkage
+          <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-6 shadow-xs">
+            <h3 className="text-md font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+              <Landmark className="h-5 w-5 text-indigo-600" /> Primary Bank Account & NACH Auto-Debit Linkage
             </h3>
 
             {successMsg && (
-              <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-sm text-emerald-400 flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5" />
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-sm text-emerald-800 flex items-center gap-2 font-medium">
+                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                 <span>{successMsg}</span>
               </div>
             )}
@@ -271,12 +269,12 @@ export default function BorrowerProfilePage() {
               <Input label="Account Holder Name" id="accountHolderName" type="text" placeholder={profile.name || "Full Name as in Bank"} value={profile.accountHolderName || profile.name} onChange={handleInputChange} leftIcon={User} />
             </div>
 
-            <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between text-xs">
+            <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-center justify-between text-xs">
               <div>
-                <h4 className="font-bold text-white">NACH e-Mandate Status</h4>
-                <p className="text-slate-400">Automated EMI repayment debit clearance</p>
+                <h4 className="font-bold text-slate-900">NACH e-Mandate Status</h4>
+                <p className="text-slate-500">Automated EMI repayment debit clearance</p>
               </div>
-              <span className="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20">
+              <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
                 ACTIVE & LINKED
               </span>
             </div>
@@ -292,26 +290,30 @@ export default function BorrowerProfilePage() {
 
       {/* TAB 3: SECURITY & SETTINGS */}
       {activeTab === 'Security & Settings' && (
-        <div className="bg-slate-900/40 border border-slate-850 p-6 rounded-2xl space-y-6 text-xs">
-          <h3 className="text-md font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-            <Lock className="h-5 w-5 text-purple-500" /> Security & Notification Preferences
+        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-6 text-xs shadow-xs">
+          <h3 className="text-md font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+            <Lock className="h-5 w-5 text-purple-600" /> Security & Notification Preferences
           </h3>
 
           <div className="space-y-4">
-            <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex justify-between items-center">
+            <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex justify-between items-center">
               <div>
-                <h4 className="font-bold text-white">SMS & Email EMI Payment Alerts</h4>
-                <p className="text-slate-400">Receive reminders 3 days before EMI auto-debit dates</p>
+                <h4 className="font-bold text-slate-900">SMS & Email EMI Payment Alerts</h4>
+                <p className="text-slate-500">Receive reminders 3 days before EMI auto-debit dates</p>
               </div>
-              <span className="text-emerald-400 font-bold">ENABLED</span>
+              <span className="text-emerald-700 font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                ENABLED
+              </span>
             </div>
 
-            <div className="p-4 bg-slate-950 border border-slate-800 rounded-xl flex justify-between items-center">
+            <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex justify-between items-center">
               <div>
-                <h4 className="font-bold text-white">Two-Factor Security Authentication (2FA)</h4>
-                <p className="text-slate-400">Require OTP verification for profile changes</p>
+                <h4 className="font-bold text-slate-900">Two-Factor Security Authentication (2FA)</h4>
+                <p className="text-slate-500">Require OTP verification for profile changes</p>
               </div>
-              <span className="text-emerald-400 font-bold">ENABLED</span>
+              <span className="text-emerald-700 font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                ENABLED
+              </span>
             </div>
           </div>
         </div>

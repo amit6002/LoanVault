@@ -6,7 +6,7 @@ import Input from '../../../components/common/Input';
 
 /**
  * ============================================================
- * ADMIN AUDIT TRAIL PAGE COMPONENT
+ * ADMIN AUDIT TRAIL PAGE COMPONENT (LIGHT THEME)
  * Connected to Spring Boot REST API (/api/admin/audit-logs).
  * Displays real-time immutable security event logs recorded by the backend.
  * ============================================================
@@ -16,6 +16,13 @@ export default function AuditTrailPage() {
   const [audits, setAudits] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const initialSeedAudits = [
+    { id: 'LOG-9023', time: '19-Jul-2026 16:42', user: 'manager@loanvault.com', action: 'Approved loan sanction APP-2026-00431', ip: '192.168.1.14', level: 'HIGH' },
+    { id: 'LOG-8845', time: '19-Jul-2026 15:30', user: 'officer@loanvault.com', action: 'KYC check verified for borrower@loanvault.com', ip: '192.168.1.25', level: 'MEDIUM' },
+    { id: 'LOG-8512', time: '19-Jul-2026 14:15', user: 'admin@loanvault.com', action: 'System settings altered. RBI interest bounds updated.', ip: '10.0.0.8', level: 'HIGH' },
+    { id: 'LOG-8239', time: '19-Jul-2026 11:10', user: 'borrower@loanvault.com', action: 'Created new password registration token', ip: '172.16.24.1', level: 'LOW' }
+  ];
+
   useEffect(() => {
     fetchAuditLogs();
   }, [search]);
@@ -23,7 +30,6 @@ export default function AuditTrailPage() {
   const fetchAuditLogs = async () => {
     setIsLoading(true);
     try {
-      // 1. Call Spring Boot API
       const endpoint = search ? `/api/admin/audit-logs?search=${encodeURIComponent(search)}` : '/api/admin/audit-logs';
       const res = await api.get(endpoint);
       const logList = res.content || res || [];
@@ -46,21 +52,13 @@ export default function AuditTrailPage() {
     }
   };
 
-  const initialSeedAudits = [
-    { id: 'LOG-9023', time: '19-Jul-2026 16:42', user: 'manager@loanvault.com', action: 'Approved loan sanction APP-2026-00431', ip: '192.168.1.14', level: 'HIGH' },
-    { id: 'LOG-8845', time: '19-Jul-2026 15:30', user: 'officer@loanvault.com', action: 'KYC check verified for borrower@loanvault.com', ip: '192.168.1.25', level: 'MEDIUM' },
-    { id: 'LOG-8512', time: '19-Jul-2026 14:15', user: 'admin@loanvault.com', action: 'System settings altered. RBI interest bounds updated.', ip: '10.0.0.8', level: 'HIGH' },
-    { id: 'LOG-8239', time: '19-Jul-2026 11:10', user: 'borrower@loanvault.com', action: 'Created new password registration token', ip: '172.16.24.1', level: 'LOW' }
-  ];
-
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
-      
       {/* Page Heading */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-5">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-5">
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Security Audit Logs</h1>
-          <p className="text-sm text-slate-400 mt-1">Review immutable system transactions, compliance changes, and user operations.</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Security Audit Logs</h1>
+          <p className="text-sm text-slate-500 mt-1">Review immutable system transactions, compliance changes, and user operations.</p>
         </div>
         <Button variant="secondary" size="sm" leftIcon={Download}>
           Export CSV Log
@@ -68,8 +66,7 @@ export default function AuditTrailPage() {
       </div>
 
       {/* Main Audit Log Grid */}
-      <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-6 space-y-6">
-        
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-6 shadow-xs">
         {/* Search filter input */}
         <div className="max-w-md">
           <Input
@@ -81,37 +78,37 @@ export default function AuditTrailPage() {
         </div>
 
         {/* Logs Table */}
-        <div className="overflow-x-auto border border-slate-800 rounded-xl text-xs">
+        <div className="overflow-x-auto border border-slate-200 rounded-2xl text-xs">
           {isLoading ? (
-            <div className="p-8 text-center text-slate-400 font-medium space-y-2">
-              <div className="h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="p-8 text-center text-slate-500 font-medium space-y-2">
+              <div className="h-5 w-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
               <p className="text-xs">Fetching audit logs from PostgreSQL...</p>
             </div>
           ) : (
-            <table className="min-w-full divide-y divide-slate-800">
-              <thead className="bg-slate-900/80">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400 font-mono">Log ID</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Timestamp</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">System User</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Action Event Description</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">IP Location</th>
-                  <th className="px-4 py-3 text-center font-semibold text-slate-400">Audit Level</th>
+                  <th className="px-4 py-3 text-left font-bold text-slate-400 uppercase text-[10px] font-mono">Log ID</th>
+                  <th className="px-4 py-3 text-left font-bold text-slate-400 uppercase text-[10px]">Timestamp</th>
+                  <th className="px-4 py-3 text-left font-bold text-slate-400 uppercase text-[10px]">System User</th>
+                  <th className="px-4 py-3 text-left font-bold text-slate-400 uppercase text-[10px]">Action Event Description</th>
+                  <th className="px-4 py-3 text-left font-bold text-slate-400 uppercase text-[10px]">IP Location</th>
+                  <th className="px-4 py-3 text-center font-bold text-slate-400 uppercase text-[10px]">Audit Level</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-850 bg-slate-900/20 text-slate-300">
+              <tbody className="divide-y divide-slate-200 text-slate-800">
                 {audits.map((log, idx) => (
-                  <tr key={log.id || idx} className="hover:bg-slate-900/40 transition-colors">
-                    <td className="px-4 py-3 font-mono text-slate-500">{log.id}</td>
-                    <td className="px-4 py-3 text-slate-400">{log.time}</td>
-                    <td className="px-4 py-3 text-white font-semibold">{log.user}</td>
-                    <td className="px-4 py-3 text-slate-300">{log.action}</td>
+                  <tr key={log.id || idx} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3 font-mono text-indigo-600 font-bold">{log.id}</td>
+                    <td className="px-4 py-3 text-slate-500 font-medium">{log.time}</td>
+                    <td className="px-4 py-3 text-slate-900 font-bold">{log.user}</td>
+                    <td className="px-4 py-3 text-slate-700 font-medium">{log.action}</td>
                     <td className="px-4 py-3 font-mono text-slate-400">{log.ip}</td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                         log.level === 'HIGH' 
-                          ? 'bg-red-500/10 text-red-500 border border-red-500/20' 
-                          : log.level === 'MEDIUM' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                          ? 'bg-rose-50 text-rose-700 border border-rose-200' 
+                          : log.level === 'MEDIUM' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
                       }`}>
                         {log.level}
                       </span>
@@ -123,7 +120,6 @@ export default function AuditTrailPage() {
           )}
         </div>
       </div>
-
     </div>
   );
 }

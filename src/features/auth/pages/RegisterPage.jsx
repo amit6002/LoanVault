@@ -10,7 +10,7 @@ import Button from '../../../components/common/Button';
 
 /**
  * ============================================================
- * REGISTER PAGE COMPONENT
+ * REGISTER PAGE COMPONENT (LIGHT THEME)
  * Connected to Spring Boot REST API for borrower account registration.
  * ============================================================
  */
@@ -83,7 +83,6 @@ export default function RegisterPage() {
     setApiError('');
 
     try {
-      // 1. Call Spring Boot Auth Register API
       const res = await api.post('/api/auth/register', {
         name: formData.name,
         email: formData.email,
@@ -91,7 +90,6 @@ export default function RegisterPage() {
         branch: formData.branch,
       });
 
-      // 2. Save JWT Token & Session Data
       localStorage.setItem('lms_token', res.token);
       localStorage.setItem(
         'lms_session',
@@ -105,7 +103,6 @@ export default function RegisterPage() {
         })
       );
 
-      // 3. Redirect to Borrower Dashboard
       navigate(PATHS.BORROWER_DASHBOARD);
     } catch (err) {
       setApiError(err.message || 'Registration failed. Please try again.');
@@ -115,23 +112,21 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-950">
-      <div className="max-w-md w-full space-y-8 bg-slate-900/40 border border-slate-900 p-8 rounded-2xl backdrop-blur-md relative overflow-hidden">
-        {/* Glow effect inside form */}
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-600/10 rounded-full blur-2xl pointer-events-none" />
-
+    <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50">
+      <div className="max-w-md w-full space-y-8 bg-white border border-slate-200/80 p-8 rounded-3xl shadow-xl relative overflow-hidden text-slate-900">
         {/* Headings */}
         <div className="text-center">
-          <div className="inline-flex p-3 bg-blue-600/10 rounded-xl text-blue-500 mb-4">
+          <div className="inline-flex p-3.5 bg-indigo-50 border border-indigo-100 rounded-2xl text-indigo-600 mb-4 shadow-xs">
             <Landmark className="h-8 w-8" />
           </div>
-          <h2 className="text-3xl font-extrabold text-white">Create Account</h2>
+          <h2 className="text-3xl font-black text-slate-900">Create Account</h2>
+          <p className="text-xs text-slate-500 mt-1 font-medium">Join LoanVault for paperless lending</p>
         </div>
 
         {/* API Error Alert */}
         {apiError && (
-          <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/10 flex items-start gap-3 text-xs text-red-400">
-            <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="p-4 rounded-2xl border border-rose-200 bg-rose-50 flex items-start gap-3 text-xs text-rose-700 font-medium">
+            <AlertCircle className="h-4 w-4 text-rose-600 flex-shrink-0 mt-0.5" />
             <span>{apiError}</span>
           </div>
         )}
@@ -139,7 +134,6 @@ export default function RegisterPage() {
         {/* Form Container */}
         <form className="mt-8 space-y-6" onSubmit={handleFormSubmit} noValidate>
           <div className="space-y-4">
-            {/* Name Input */}
             <Input
               ref={nameRef}
               label="Full Name"
@@ -153,7 +147,6 @@ export default function RegisterPage() {
               disabled={isLoading}
             />
 
-            {/* Email Input */}
             <Input
               ref={emailRef}
               label="Email Address"
@@ -167,7 +160,6 @@ export default function RegisterPage() {
               disabled={isLoading}
             />
 
-            {/* Password Input */}
             <Input
               label="Password"
               id="password"
@@ -180,7 +172,6 @@ export default function RegisterPage() {
               disabled={isLoading}
             />
 
-            {/* Branch Selection Dropdown */}
             <Select
               label="Preferred Bank Branch"
               id="branch"
@@ -192,7 +183,6 @@ export default function RegisterPage() {
               placeholder="Select local branch office"
             />
 
-            {/* Terms Agreement Checkbox */}
             <Checkbox
               label="I agree to the Terms & Conditions"
               description="I authorize LoanVault to verify my credit profile parameters."
@@ -204,7 +194,6 @@ export default function RegisterPage() {
             />
           </div>
 
-          {/* Submit Action Button */}
           <div className="space-y-4">
             <Button
               type="submit"
@@ -215,9 +204,9 @@ export default function RegisterPage() {
               Register Account
             </Button>
             
-            <p className="text-center text-sm text-slate-400">
+            <p className="text-center text-xs text-slate-500 font-medium">
               Or{' '}
-              <Link to={PATHS.LOGIN} className="font-semibold text-blue-500 hover:text-blue-400 transition-colors">
+              <Link to={PATHS.LOGIN} className="font-bold text-indigo-600 hover:text-indigo-700 transition-colors">
                 sign in to your existing account
               </Link>
             </p>

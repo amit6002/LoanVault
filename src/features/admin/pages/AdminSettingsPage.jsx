@@ -5,7 +5,7 @@ import Button from '../../../components/common/Button';
 
 /**
  * ============================================================
- * ADMIN SYSTEM SETTINGS PAGE COMPONENT
+ * ADMIN SYSTEM SETTINGS PAGE COMPONENT (LIGHT THEME)
  * Renders master baseline data parameters for interest bounds, CIBIL thresholds.
  * ============================================================
  */
@@ -39,20 +39,20 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
-      <div className="border-b border-slate-800 pb-5">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">System Settings</h1>
-        <p className="text-sm text-slate-400 mt-1">Configure global underwriting thresholds and bank parameter bounds.</p>
+      <div className="border-b border-slate-200 pb-5">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">System Settings</h1>
+        <p className="text-sm text-slate-500 mt-1">Configure global underwriting thresholds and bank parameter bounds.</p>
       </div>
 
       {/* Inline success banner */}
       {successMessage && (
-        <div className="flex items-start gap-3 p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 animate-in fade-in duration-300">
-          <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-emerald-400 font-medium">{successMessage}</p>
+        <div className="flex items-start gap-3 p-4 rounded-2xl border border-emerald-200 bg-emerald-50 animate-in fade-in duration-300">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-emerald-800 font-medium">{successMessage}</p>
         </div>
       )}
 
-      <div className="max-w-2xl bg-slate-900/40 border border-slate-900 p-6 rounded-2xl">
+      <div className="max-w-2xl bg-white border border-slate-200/80 p-6 sm:p-8 rounded-2xl shadow-xs">
         <form onSubmit={handleSave} className="space-y-6" noValidate>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <Input
@@ -88,7 +88,7 @@ export default function AdminSettingsPage() {
             />
           </div>
 
-          <div className="border-t border-slate-800 pt-6">
+          <div className="border-t border-slate-200 pt-6">
             <Button type="submit" variant="primary" leftIcon={Save} isLoading={isLoading}>
               Save Configurations
             </Button>

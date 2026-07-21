@@ -8,7 +8,7 @@ import Button from '../../../components/common/Button';
 
 /**
  * ============================================================
- * ADMIN MANAGE USERS PAGE COMPONENT
+ * ADMIN MANAGE USERS PAGE COMPONENT (LIGHT THEME)
  * Connected to Spring Boot REST API (/api/admin/users).
  * Lists all registered users from PostgreSQL, supports staff invitations,
  * and account toggling.
@@ -35,6 +35,13 @@ export default function ManageUsersPage() {
     { value: ROLES.ADMIN, label: 'System Administrator' },
   ];
 
+  const initialSeedUsers = [
+    { id: 1, name: 'Rahul Sharma', email: 'borrower@loanvault.com', role: ROLES.BORROWER, status: 'ACTIVE' },
+    { id: 2, name: 'Pooja Verma', email: 'officer@loanvault.com', role: ROLES.OFFICER, status: 'ACTIVE' },
+    { id: 3, name: 'Vikram Malhotra', email: 'manager@loanvault.com', role: ROLES.MANAGER, status: 'ACTIVE' },
+    { id: 4, name: 'System Admin', email: 'admin@loanvault.com', role: ROLES.ADMIN, status: 'ACTIVE' },
+  ];
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -42,7 +49,6 @@ export default function ManageUsersPage() {
   const fetchUsers = async () => {
     setIsLoadingList(true);
     try {
-      // 1. Call Spring Boot API
       const res = await api.get('/api/admin/users?page=0&size=50');
       const userList = res.content || res || [];
       
@@ -62,13 +68,6 @@ export default function ManageUsersPage() {
       setIsLoadingList(false);
     }
   };
-
-  const initialSeedUsers = [
-    { id: 1, name: 'Rahul Sharma', email: 'borrower@loanvault.com', role: ROLES.BORROWER, status: 'ACTIVE' },
-    { id: 2, name: 'Pooja Verma', email: 'officer@loanvault.com', role: ROLES.OFFICER, status: 'ACTIVE' },
-    { id: 3, name: 'Vikram Malhotra', email: 'manager@loanvault.com', role: ROLES.MANAGER, status: 'ACTIVE' },
-    { id: 4, name: 'System Admin', email: 'admin@loanvault.com', role: ROLES.ADMIN, status: 'ACTIVE' },
-  ];
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -100,7 +99,6 @@ export default function ManageUsersPage() {
     setSuccessMessage('');
 
     try {
-      // 1. Call Spring Boot API to invite user
       const res = await api.post('/api/admin/users/invite', {
         name: form.name,
         email: form.email,
@@ -131,47 +129,45 @@ export default function ManageUsersPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
-      
       {/* Page Heading */}
-      <div className="border-b border-slate-800 pb-5">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Manage User Accounts</h1>
-        <p className="text-sm text-slate-400 mt-1">Configure account access, invite internal bank staff, and manage authorization levels.</p>
+      <div className="border-b border-slate-200 pb-5">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Manage User Accounts</h1>
+        <p className="text-sm text-slate-500 mt-1">Configure account access, invite internal bank staff, and manage authorization levels.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
         {/* LEFT CONTAINER: User accounts table (7 columns) */}
-        <div className="lg:col-span-7 bg-slate-900/40 border border-slate-900 p-6 rounded-2xl space-y-6">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-            <Users className="h-5 w-5 text-blue-500" />
+        <div className="lg:col-span-7 bg-white border border-slate-200/80 p-6 rounded-2xl space-y-6 shadow-xs">
+          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+            <Users className="h-5 w-5 text-indigo-600" />
             Active Institutional Directory
           </h2>
 
-          <div className="overflow-x-auto border border-slate-800 rounded-xl text-xs">
-            <table className="min-w-full divide-y divide-slate-800">
-              <thead className="bg-slate-900/80">
+          <div className="overflow-x-auto border border-slate-200 rounded-2xl text-xs">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">User Details</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-400">Assigned Role</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-400">Status</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-400">Action</th>
+                  <th className="px-4 py-3 text-left font-bold text-slate-400 uppercase text-[10px]">User Details</th>
+                  <th className="px-4 py-3 text-left font-bold text-slate-400 uppercase text-[10px]">Assigned Role</th>
+                  <th className="px-4 py-3 text-right font-bold text-slate-400 uppercase text-[10px]">Status</th>
+                  <th className="px-4 py-3 text-right font-bold text-slate-400 uppercase text-[10px]">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800 bg-slate-900/20 text-slate-300">
+              <tbody className="divide-y divide-slate-200 text-slate-800">
                 {users.map((u, idx) => (
-                  <tr key={u.id || idx} className="hover:bg-slate-900/40 transition-colors">
+                  <tr key={u.id || idx} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3">
-                      <div className="font-bold text-white text-sm">{u.name}</div>
-                      <div className="text-[11px] text-slate-500 font-mono">{u.email}</div>
+                      <div className="font-bold text-slate-900 text-sm">{u.name}</div>
+                      <div className="text-[11px] text-slate-400 font-mono">{u.email}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                      <span className="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
                         {u.role}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        u.status === 'ACTIVE' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                        u.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
                       }`}>
                         {u.status}
                       </span>
@@ -179,7 +175,7 @@ export default function ManageUsersPage() {
                     <td className="px-4 py-3 text-right">
                       <button
                         onClick={() => handleToggleStatus(u.id)}
-                        className="text-[11px] font-semibold text-slate-400 hover:text-white transition-colors"
+                        className="text-[11px] font-bold text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
                       >
                         {u.status === 'ACTIVE' ? 'Disable' : 'Enable'}
                       </button>
@@ -192,22 +188,22 @@ export default function ManageUsersPage() {
         </div>
 
         {/* RIGHT CONTAINER: Invite Staff Form (5 columns) */}
-        <div className="lg:col-span-5 bg-slate-900/40 border border-slate-900 p-6 rounded-2xl space-y-6">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-            <UserPlus className="h-5 w-5 text-blue-500" />
+        <div className="lg:col-span-5 bg-white border border-slate-200/80 p-6 rounded-2xl space-y-6 shadow-xs">
+          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+            <UserPlus className="h-5 w-5 text-indigo-600" />
             Invite Internal Bank Staff
           </h2>
 
           {apiError && (
-            <div className="p-3.5 rounded-xl border border-red-500/20 bg-red-500/10 flex items-start gap-2.5 text-xs text-red-400">
-              <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-2xl border border-rose-200 bg-rose-50 flex items-start gap-2.5 text-xs text-rose-700 font-medium">
+              <AlertCircle className="h-4 w-4 text-rose-600 flex-shrink-0 mt-0.5" />
               <span>{apiError}</span>
             </div>
           )}
 
           {successMessage && (
-            <div className="p-3.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 flex items-start gap-2.5 text-xs text-emerald-400">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-2xl border border-emerald-200 bg-emerald-50 flex items-start gap-2.5 text-xs text-emerald-800 font-medium">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
               <span>{successMessage}</span>
             </div>
           )}
@@ -258,7 +254,6 @@ export default function ManageUsersPage() {
             </Button>
           </form>
         </div>
-
       </div>
     </div>
   );

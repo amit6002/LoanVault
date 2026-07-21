@@ -8,7 +8,7 @@ import Button from '../../../components/common/Button';
 
 /**
  * ============================================================
- * FORGOT PASSWORD PAGE COMPONENT
+ * FORGOT PASSWORD PAGE COMPONENT (LIGHT THEME)
  * Connected to Spring Boot REST API for email OTP password recovery.
  * Step 1: Send OTP to email via Gmail SMTP
  * Step 2: Verify OTP
@@ -49,7 +49,6 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  // --- Step 1: Request Email OTP ---
   const handleSubmitEmail = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
@@ -67,7 +66,6 @@ export default function ForgotPasswordPage() {
     setApiSuccess('');
 
     try {
-      // 1. Call Spring Boot API to send real email OTP
       const res = await api.post('/api/auth/forgot-password', { email });
       setApiSuccess(res.message || `OTP sent to ${email}`);
       setStep(2);
@@ -78,7 +76,6 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  // --- Step 2: Verify OTP ---
   const handleSubmitOtp = async (e) => {
     e.preventDefault();
     if (otp.length < LIMITS.OTP_LENGTH) {
@@ -91,7 +88,6 @@ export default function ForgotPasswordPage() {
     setApiError('');
 
     try {
-      // 2. Call Spring Boot API to verify OTP
       await api.post(`/api/auth/verify-otp?email=${encodeURIComponent(email)}&otp=${encodeURIComponent(otp)}`);
       setStep(3);
     } catch (err) {
@@ -101,7 +97,6 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  // --- Step 3: Reset Password ---
   const handleSubmitReset = async (e) => {
     e.preventDefault();
     const newErrors = {};
@@ -125,7 +120,6 @@ export default function ForgotPasswordPage() {
     setApiError('');
 
     try {
-      // 3. Call Spring Boot API to update password in PostgreSQL
       await api.post('/api/auth/reset-password', {
         email,
         otp,
@@ -144,18 +138,15 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-950">
-      <div className="max-w-md w-full space-y-8 bg-slate-900/40 border border-slate-900 p-8 rounded-2xl backdrop-blur-md relative overflow-hidden">
-        {/* Decorative Glow */}
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-600/10 rounded-full blur-2xl pointer-events-none" />
-
+    <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50">
+      <div className="max-w-md w-full space-y-8 bg-white border border-slate-200/80 p-8 rounded-3xl shadow-xl relative overflow-hidden text-slate-900">
         {/* Headings */}
         <div className="text-center">
-          <div className="inline-flex p-3 bg-blue-600/10 rounded-xl text-blue-500 mb-4">
+          <div className="inline-flex p-3.5 bg-indigo-50 border border-indigo-100 rounded-2xl text-indigo-600 mb-4 shadow-xs">
             <Landmark className="h-8 w-8" />
           </div>
-          <h2 className="text-3xl font-extrabold text-white">Reset Password</h2>
-          <p className="mt-2 text-sm text-slate-400">
+          <h2 className="text-3xl font-black text-slate-900">Reset Password</h2>
+          <p className="mt-1 text-xs text-slate-500 font-medium">
             {step === 1 && 'Enter your registered email to receive an email OTP.'}
             {step === 2 && `Check your Gmail inbox for the OTP sent to ${email}`}
             {step === 3 && 'Choose a strong, secure new password.'}
@@ -164,15 +155,15 @@ export default function ForgotPasswordPage() {
 
         {/* API Error Banner */}
         {apiError && (
-          <div className="p-4 rounded-xl border border-red-500/20 bg-red-500/10 flex items-start gap-3 text-xs text-red-400">
-            <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="p-4 rounded-2xl border border-rose-200 bg-rose-50 flex items-start gap-3 text-xs text-rose-700 font-medium">
+            <AlertCircle className="h-4 w-4 text-rose-600 flex-shrink-0 mt-0.5" />
             <span>{apiError}</span>
           </div>
         )}
 
         {/* API Success Banner */}
         {apiSuccess && (
-          <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-xs text-emerald-400 font-medium">
+          <div className="p-4 rounded-2xl border border-emerald-200 bg-emerald-50 text-xs text-emerald-800 font-bold">
             {apiSuccess}
           </div>
         )}
@@ -196,7 +187,7 @@ export default function ForgotPasswordPage() {
             <div className="flex items-center justify-between gap-4 pt-2">
               <Link
                 to={PATHS.LOGIN}
-                className="inline-flex items-center gap-1 text-sm font-semibold text-slate-400 hover:text-white transition-colors"
+                className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Back to Login
@@ -229,8 +220,8 @@ export default function ForgotPasswordPage() {
                 leftIcon={KeyRound}
                 disabled={isLoading}
               />
-              <div className="p-3.5 rounded-lg border border-blue-500/20 bg-blue-500/5 text-xs text-slate-400">
-                📩 An email with your 6-digit OTP code has been delivered to <strong className="text-white">{email}</strong>.
+              <div className="p-3.5 rounded-2xl border border-indigo-200 bg-indigo-50/60 text-xs text-indigo-900 font-medium">
+                📩 An email with your 6-digit OTP code has been delivered to <strong className="text-slate-900 font-bold">{email}</strong>.
               </div>
             </div>
 
@@ -238,7 +229,7 @@ export default function ForgotPasswordPage() {
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="inline-flex items-center gap-1 text-sm font-semibold text-slate-400 hover:text-white transition-colors focus:outline-none"
+                className="inline-flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-900 transition-colors cursor-pointer"
                 disabled={isLoading}
               >
                 <ArrowLeft className="h-4 w-4" />

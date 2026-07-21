@@ -8,10 +8,9 @@ import Checkbox from '../../../components/common/Checkbox';
 
 /**
  * ============================================================
- * LOAN OFFICER APPLICATION QUEUE PAGE
+ * LOAN OFFICER APPLICATION QUEUE PAGE (LIGHT THEME)
  * Manages loan underwriting, verification audits, CIBIL pull requests,
  * manual document inspection checkboxes, and manager recommendations.
- * Connected directly to Spring Boot REST API!
  * ============================================================
  */
 export default function ApplicationQueuePage() {
@@ -20,7 +19,6 @@ export default function ApplicationQueuePage() {
   const [isLoadingQueue, setIsLoadingQueue] = useState(true);
   const [error, setError] = useState(null);
   
-  // Custom states for document & credit verification
   const [docsVerified, setDocsVerified] = useState({
     idProof: false,
     incomeProof: false,
@@ -32,7 +30,6 @@ export default function ApplicationQueuePage() {
   const [inspectingDoc, setInspectingDoc] = useState(null);
   const [officerNotes, setOfficerNotes] = useState('');
 
-  // Fetch queue on mount
   useEffect(() => {
     fetchQueue();
   }, []);
@@ -41,12 +38,11 @@ export default function ApplicationQueuePage() {
     setIsLoadingQueue(true);
     setError(null);
     try {
-      // Fetch from Spring Boot API — single source of truth
       const data = await api.get('/api/applications/queue');
 
       const queueList = (Array.isArray(data) ? data : []).map(item => ({
         id: item.referenceId || item.id,
-        dbId: item.id,  // Always the numeric database ID
+        dbId: item.id,
         type: item.loanType || 'PERSONAL',
         amount: item.loanAmount || 0,
         tenureMonths: item.tenureMonths || 0,
@@ -80,17 +76,15 @@ export default function ApplicationQueuePage() {
     setInspectingDoc(null);
   };
 
-  // Simulate CIBIL score pull
   const handlePullCibil = () => {
     setCibilLoading(true);
     setTimeout(() => {
       setCibilLoading(false);
-      const randomScore = Math.floor(720 + Math.random() * 100); // between 720 and 820
+      const randomScore = Math.floor(720 + Math.random() * 100);
       setCibilScore(randomScore);
     }, 1000);
   };
 
-  // Submit Officer Recommendation to Backend
   const handleRecommendation = async (recommendationType) => {
     if (!selectedApp) return;
     setActionLoading(true);
@@ -100,13 +94,11 @@ export default function ApplicationQueuePage() {
         ? `Verified by Loan Officer. CIBIL score: ${cibilScore || 780}. Approved for manager sanction.`
         : 'Rejected due to document discrepancies.');
 
-      // Call backend API — single source of truth
       await api.put(`/api/applications/${selectedApp.dbId}/recommend`, {
         recommendation: recommendationType,
         remarks: remarks,
       });
 
-      // Update local state list — remove from queue since it's now recommended
       setApplications(prev => prev.filter(a => a.id !== selectedApp.id));
       setSelectedApp(null);
     } catch (err) {
@@ -120,78 +112,76 @@ export default function ApplicationQueuePage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
-      
       {/* Page Heading */}
-      <div className="border-b border-slate-800 pb-5">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Application Queue</h1>
-        <p className="text-sm text-slate-400 mt-1">Review KYC files, manually inspect documents, evaluate credit reports, and forward proposals to Loan Managers.</p>
+      <div className="border-b border-slate-200 pb-5">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Application Queue</h1>
+        <p className="text-sm text-slate-500 mt-1">Review KYC files, manually inspect documents, evaluate credit reports, and forward proposals to Loan Managers.</p>
       </div>
 
       {/* Error banner */}
       {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 flex items-start gap-3">
-          <XCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-sm text-rose-700 flex items-start gap-3">
+          <XCircle className="h-5 w-5 text-rose-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold">Connection Error</p>
-            <p className="text-xs text-red-400/80 mt-1">{error}</p>
+            <p className="font-bold">Connection Error</p>
+            <p className="text-xs text-rose-600 mt-1">{error}</p>
             <button
               onClick={fetchQueue}
-              className="text-xs text-red-300 underline mt-2 hover:text-white transition-colors"
+              className="text-xs text-rose-700 font-bold underline mt-2 hover:text-rose-800 transition-colors cursor-pointer"
             >
-              Retry
+              Retry Connection
             </button>
           </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
         {/* LEFT CONTAINER: Queue grid (7 columns) */}
         <div className="lg:col-span-7 space-y-4">
           {isLoadingQueue ? (
-            <div className="p-8 text-center text-slate-400 font-medium space-y-2 bg-slate-900/30 rounded-xl border border-slate-800">
-              <div className="h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <div className="p-8 text-center text-slate-500 font-medium space-y-2 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+              <div className="h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
               <p className="text-xs">Fetching pending underwriting queue from Spring Boot backend...</p>
             </div>
           ) : applications.length === 0 && !error ? (
-            <div className="bg-slate-900 border border-slate-850 p-10 rounded-2xl text-center space-y-4">
-              <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto animate-bounce" />
-              <h3 className="text-lg font-bold text-white">Queue completely cleared!</h3>
-              <p className="text-sm text-slate-500 max-w-sm mx-auto">
+            <div className="bg-white border border-slate-200/80 p-10 rounded-2xl text-center space-y-4 shadow-xs">
+              <CheckCircle2 className="h-12 w-12 text-emerald-600 mx-auto animate-bounce" />
+              <h3 className="text-lg font-bold text-slate-900">Queue completely cleared!</h3>
+              <p className="text-sm text-slate-500 max-w-sm mx-auto font-medium">
                 No borrower applications are pending document verification checks at this moment. Apply for a new loan as a Borrower to see it appear here in real-time!
               </p>
             </div>
           ) : (
             applications.map((app) => {
-              const statusConfig = STATUS_CONFIG[app.status] || { label: app.status, color: 'bg-slate-800 text-slate-400' };
+              const statusConfig = STATUS_CONFIG[app.status] || { label: app.status, color: 'bg-slate-100 text-slate-600 border border-slate-200' };
               const isSelected = selectedApp?.id === app.id;
               
               return (
                 <div
                   key={app.id}
                   onClick={() => handleSelectApp(app)}
-                  className={`p-5 rounded-xl border transition-all duration-200 cursor-pointer flex justify-between items-center ${
+                  className={`p-5 rounded-2xl border transition-all duration-200 cursor-pointer flex justify-between items-center ${
                     isSelected 
-                      ? 'bg-slate-900/80 border-blue-600 shadow-md ring-1 ring-blue-500/50' 
-                      : 'bg-slate-900/30 border-slate-800 hover:border-slate-700'
+                      ? 'bg-indigo-50/80 border-indigo-500 text-slate-900 shadow-xs' 
+                      : 'bg-white border-slate-200/80 hover:border-indigo-500/50 shadow-xs'
                   }`}
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-semibold text-slate-500">REF: {app.id}</span>
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${statusConfig.color}`}>
+                      <span className="text-xs font-mono font-bold text-indigo-600">REF: {app.id}</span>
+                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold ${statusConfig.color}`}>
                         {statusConfig.label}
                       </span>
                     </div>
-                    <h3 className="text-md font-bold text-white">
+                    <h3 className="text-md font-bold text-slate-900">
                       {app.fullName} ({app.type} Loan)
                     </h3>
-                    <p className="text-xs text-slate-500">Submitted: {app.appliedDate}</p>
+                    <p className="text-xs text-slate-400 font-medium">Submitted: {app.appliedDate}</p>
                   </div>
 
-                  <div className="text-right space-y-2">
-                    <p className="text-md font-black text-white">{formatCurrency(app.amount, false)}</p>
-                    <span className="text-xs text-blue-500 font-semibold flex items-center justify-end gap-1">
+                  <div className="text-right space-y-1.5">
+                    <p className="text-md font-black text-slate-900">{formatCurrency(app.amount, false)}</p>
+                    <span className="text-xs text-indigo-600 font-bold flex items-center justify-end gap-1">
                       Audit File <ChevronRight className="h-3.5 w-3.5" />
                     </span>
                   </div>
@@ -204,47 +194,47 @@ export default function ApplicationQueuePage() {
         {/* RIGHT CONTAINER: Audit & Recommendation Form (5 columns) */}
         <div className="lg:col-span-5">
           {selectedApp ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 animate-in fade-in duration-300">
-              <div className="border-b border-slate-800 pb-4 flex justify-between items-start gap-4">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-6 animate-in fade-in duration-300 shadow-xs">
+              <div className="border-b border-slate-200 pb-4 flex justify-between items-start gap-4">
                 <div>
-                  <h3 className="text-lg font-bold text-white">Audit Workspace</h3>
-                  <span className="text-xs font-mono text-slate-500">ID: {selectedApp.id}</span>
+                  <h3 className="text-lg font-bold text-slate-900">Audit Workspace</h3>
+                  <span className="text-xs font-mono text-indigo-600 font-bold">ID: {selectedApp.id}</span>
                 </div>
                 <Button variant="secondary" size="sm" onClick={() => setSelectedApp(null)}>Close</Button>
               </div>
 
               {/* Borrower Profile Details */}
-              <div className="space-y-2 text-xs leading-relaxed border-b border-slate-850 pb-4">
+              <div className="space-y-2 text-xs leading-relaxed border-b border-slate-200 pb-4">
                 <div className="flex justify-between">
-                  <span className="text-slate-500 font-semibold">Applicant Name</span>
-                  <span className="text-white font-bold">{selectedApp.fullName}</span>
+                  <span className="text-slate-500 font-medium">Applicant Name</span>
+                  <span className="text-slate-900 font-bold">{selectedApp.fullName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 font-semibold">PAN Card</span>
-                  <span className="text-slate-300 font-mono">{selectedApp.panNumber}</span>
+                  <span className="text-slate-500 font-medium">PAN Card</span>
+                  <span className="text-slate-700 font-mono font-bold">{selectedApp.panNumber}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 font-semibold">Monthly Income</span>
-                  <span className="text-emerald-400 font-bold">{formatCurrency(selectedApp.monthlyIncome, false)}</span>
+                  <span className="text-slate-500 font-medium">Monthly Income</span>
+                  <span className="text-emerald-700 font-bold">{formatCurrency(selectedApp.monthlyIncome, false)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500 font-semibold">Requested Amount</span>
-                  <span className="text-white font-bold">{formatCurrency(selectedApp.amount, false)}</span>
+                  <span className="text-slate-500 font-medium">Requested Amount</span>
+                  <span className="text-slate-900 font-bold">{formatCurrency(selectedApp.amount, false)}</span>
                 </div>
               </div>
 
-              {/* Step 1: Manual Document Inspection & Verification */}
+              {/* Step 1: Manual Document Inspection */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Step 1: Manual Document Inspection</h4>
-                  <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded font-mono">
+                  <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2.5 py-0.5 rounded-full font-mono font-bold border border-indigo-200">
                     {Object.values(docsVerified).filter(Boolean).length}/3 Verified
                   </span>
                 </div>
 
-                <div className="space-y-2 bg-slate-950/60 border border-slate-800 p-3 rounded-xl text-xs">
+                <div className="space-y-2 bg-slate-50 border border-slate-200/80 p-3 rounded-2xl text-xs">
                   {/* ID Proof Doc */}
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200">
                     <div className="flex items-center gap-2">
                       <Checkbox
                         id="doc_id"
@@ -256,14 +246,14 @@ export default function ApplicationQueuePage() {
                     <button
                       type="button"
                       onClick={() => setInspectingDoc('PAN Card PDF Preview')}
-                      className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1"
+                      className="text-xs text-indigo-600 hover:text-indigo-700 font-bold flex items-center gap-1 cursor-pointer"
                     >
                       <Eye className="h-3.5 w-3.5" /> Inspect
                     </button>
                   </div>
 
                   {/* Income Proof Doc */}
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200">
                     <div className="flex items-center gap-2">
                       <Checkbox
                         id="doc_inc"
@@ -275,14 +265,14 @@ export default function ApplicationQueuePage() {
                     <button
                       type="button"
                       onClick={() => setInspectingDoc('Salary Slip PDF Preview')}
-                      className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1"
+                      className="text-xs text-indigo-600 hover:text-indigo-700 font-bold flex items-center gap-1 cursor-pointer"
                     >
                       <Eye className="h-3.5 w-3.5" /> Inspect
                     </button>
                   </div>
 
                   {/* Bank Statement Doc */}
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-slate-900 border border-slate-800">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200">
                     <div className="flex items-center gap-2">
                       <Checkbox
                         id="doc_bank"
@@ -294,7 +284,7 @@ export default function ApplicationQueuePage() {
                     <button
                       type="button"
                       onClick={() => setInspectingDoc('Bank Statement PDF Preview')}
-                      className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1"
+                      className="text-xs text-indigo-600 hover:text-indigo-700 font-bold flex items-center gap-1 cursor-pointer"
                     >
                       <Eye className="h-3.5 w-3.5" /> Inspect
                     </button>
@@ -303,15 +293,15 @@ export default function ApplicationQueuePage() {
 
                 {/* Inspection Document Preview Modal Box */}
                 {inspectingDoc && (
-                  <div className="p-3.5 bg-blue-950/40 border border-blue-500/30 rounded-xl space-y-2 animate-in fade-in duration-200">
+                  <div className="p-3.5 bg-indigo-50/80 border border-indigo-200 rounded-2xl space-y-2 animate-in fade-in duration-200">
                     <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold text-blue-300 flex items-center gap-1">
-                        <FileText className="h-4 w-4" /> {inspectingDoc}
+                      <span className="text-xs font-bold text-indigo-900 flex items-center gap-1">
+                        <FileText className="h-4 w-4 text-indigo-600" /> {inspectingDoc}
                       </span>
-                      <button onClick={() => setInspectingDoc(null)} className="text-[10px] text-slate-400 hover:text-white">Close</button>
+                      <button onClick={() => setInspectingDoc(null)} className="text-xs font-bold text-slate-500 hover:text-slate-900 cursor-pointer">Close</button>
                     </div>
-                    <div className="p-3 bg-slate-950 rounded font-mono text-[10px] text-slate-400 border border-slate-800">
-                      📄 Verified digital signature: <span className="text-emerald-400">SHA256: 4a9f82...VALID</span><br />
+                    <div className="p-3 bg-white rounded-xl font-mono text-[10px] text-slate-600 border border-slate-200">
+                      📄 Verified digital signature: <span className="text-emerald-700 font-bold">SHA256: 4a9f82...VALID</span><br />
                       Status: Document metadata matches PAN {selectedApp.panNumber}
                     </div>
                   </div>
@@ -319,14 +309,14 @@ export default function ApplicationQueuePage() {
               </div>
 
               {/* Step 2: CIBIL Score Pull */}
-              <div className="space-y-3 border-t border-slate-850 pt-4">
+              <div className="space-y-3 border-t border-slate-200 pt-4">
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Step 2: Credit Score Pull</h4>
 
                 {cibilScore ? (
-                  <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-950/60 flex items-center justify-between">
-                    <span className="text-xs text-slate-400 font-medium">CIBIL Report Score:</span>
+                  <div className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50 flex items-center justify-between">
+                    <span className="text-xs text-slate-500 font-medium">CIBIL Report Score:</span>
                     <span className={`text-md font-black ${
-                      cibilScore >= 750 ? 'text-emerald-400' : cibilScore >= 680 ? 'text-amber-400' : 'text-red-400'
+                      cibilScore >= 750 ? 'text-emerald-700' : cibilScore >= 680 ? 'text-amber-700' : 'text-rose-700'
                     }`}>
                       {cibilScore} ({cibilScore >= 750 ? 'Excellent Risk' : cibilScore >= 680 ? 'Moderate' : 'High Risk'})
                     </span>
@@ -345,7 +335,7 @@ export default function ApplicationQueuePage() {
               </div>
 
               {/* Step 3: Officer Notes */}
-              <div className="space-y-2 border-t border-slate-850 pt-4">
+              <div className="space-y-2 border-t border-slate-200 pt-4">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
                   Officer Remarks for Manager
                 </label>
@@ -354,7 +344,7 @@ export default function ApplicationQueuePage() {
                   value={officerNotes}
                   onChange={(e) => setOfficerNotes(e.target.value)}
                   placeholder="e.g. All 3 KYC documents verified manually. CIBIL score is excellent."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-blue-500"
+                  className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-600 shadow-xs"
                 />
               </div>
 
@@ -362,7 +352,7 @@ export default function ApplicationQueuePage() {
               <div className="pt-2 flex gap-3">
                 <Button
                   variant="primary"
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-500 border-emerald-500"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white"
                   onClick={() => handleRecommendation('APPROVE')}
                   isLoading={actionLoading}
                   disabled={!allDocsChecked}
@@ -372,7 +362,7 @@ export default function ApplicationQueuePage() {
 
                 <Button
                   variant="secondary"
-                  className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/20"
+                  className="bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200"
                   onClick={() => handleRecommendation('REJECT')}
                   isLoading={actionLoading}
                 >
@@ -381,23 +371,21 @@ export default function ApplicationQueuePage() {
               </div>
 
               {!allDocsChecked && (
-                <p className="text-[11px] text-amber-400/90 text-center font-medium">
+                <p className="text-[11px] text-amber-700 text-center font-bold">
                   ⚠️ Check all 3 document verification checkboxes above to enable recommendation.
                 </p>
               )}
-
             </div>
           ) : (
-            <div className="bg-slate-900/40 border border-slate-900 rounded-2xl p-8 text-center space-y-3">
-              <FileText className="h-10 w-10 text-slate-600 mx-auto" />
-              <h4 className="text-sm font-bold text-slate-400">No Application Selected</h4>
-              <p className="text-xs text-slate-600 leading-relaxed">
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-8 text-center space-y-3 shadow-xs">
+              <FileText className="h-10 w-10 text-slate-300 mx-auto" />
+              <h4 className="text-sm font-bold text-slate-900">No Application Selected</h4>
+              <p className="text-xs text-slate-500 leading-relaxed font-medium">
                 Click on any application card on the left list to inspect KYC files and issue manager recommendations.
               </p>
             </div>
           )}
         </div>
-
       </div>
     </div>
   );

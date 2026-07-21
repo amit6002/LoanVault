@@ -12,7 +12,7 @@ import { api } from '../../../api/apiClient';
 
 /**
  * ============================================================
- * LOAN APPLICATION PAGE (7-STEP WIZARD)
+ * LOAN APPLICATION PAGE (7-STEP WIZARD - LIGHT THEME)
  * Handles sequential multi-page form controls, calculates
  * real-time EMI summaries, enforces profile & bank linkage prerequisites.
  * ============================================================
@@ -33,13 +33,12 @@ export default function LoanApplicationPage() {
     income: 0,
     employer: '',
     existingEmi: 0,
-    files: {}, // stores file names to simulate upload
+    files: {},
   });
 
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
-  // Fetch saved user profile from Neon Cloud DB on mount to pre-fill form and check prerequisites
   useEffect(() => {
     fetchSavedProfile();
   }, []);
@@ -74,12 +73,21 @@ export default function LoanApplicationPage() {
     }
   };
 
-  // Find currently selected product parameters
+  const handleProductSelect = (productType) => {
+    const prod = MOCK_LOAN_PRODUCTS.find((p) => p.type === productType);
+    setFormData((prev) => ({
+      ...prev,
+      productType,
+      amount: prod ? prod.minAmount : LIMITS.MIN_LOAN_AMOUNT,
+      tenureMonths: prod ? prod.minTenure : LIMITS.MIN_TENURE_MONTHS,
+    }));
+    setStep(2);
+  };
+
   const selectedProduct = useMemo(() => {
     return MOCK_LOAN_PRODUCTS.find((p) => p.type === formData.productType) || null;
   }, [formData.productType]);
 
-  // Adjust tenure and amount slider bounds dynamically based on selected product limits
   const minAmount = selectedProduct?.minAmount || LIMITS.MIN_LOAN_AMOUNT;
   const maxAmount = selectedProduct?.maxAmount || LIMITS.MAX_LOAN_AMOUNT;
   const minTenure = selectedProduct?.minTenure || LIMITS.MIN_TENURE_MONTHS;
@@ -103,18 +111,6 @@ export default function LoanApplicationPage() {
     }
   };
 
-  const handleProductSelect = (productType) => {
-    const product = MOCK_LOAN_PRODUCTS.find((p) => p.type === productType);
-    setFormData((prev) => ({
-      ...prev,
-      productType,
-      amount: product ? product.minAmount : 100000,
-      tenureMonths: product ? product.minTenure : 12,
-    }));
-    setStep(2);
-  };
-
-  // Simulate file upload (adds file name to form state)
   const handleFileUpload = (docType, fileName) => {
     setFormData((prev) => ({
       ...prev,
@@ -139,7 +135,6 @@ export default function LoanApplicationPage() {
     });
   };
 
-  // --- Real-time EMI Preview ---
   const emiPreview = useMemo(() => {
     if (!selectedProduct || formData.amount <= 0 || formData.tenureMonths <= 0) return 0;
     const P = formData.amount;
@@ -148,7 +143,6 @@ export default function LoanApplicationPage() {
     return (P * r * Math.pow(1 + r, N)) / (Math.pow(1 + r, N) - 1);
   }, [selectedProduct, formData.amount, formData.tenureMonths]);
 
-  // --- Form Navigation & Page-Level Validations ---
   const handleNextStep = () => {
     const newErrors = {};
 
@@ -183,7 +177,6 @@ export default function LoanApplicationPage() {
     }
 
     if (step === 5) {
-      // Validate that all required documents for this product type are uploaded
       selectedProduct.requiredDocs.forEach((docType) => {
         if (!formData.files[docType]) {
           newErrors[docType] = `${DOCUMENT_TYPE_LABELS[docType]} is required`;
@@ -203,7 +196,6 @@ export default function LoanApplicationPage() {
     setStep((prev) => prev - 1);
   };
 
-  // --- Final Application Submission ---
   const handleSubmission = async () => {
     try {
       const payload = {
@@ -220,7 +212,7 @@ export default function LoanApplicationPage() {
 
       await api.post('/api/applications', payload);
 
-      setStep(7); // Move to final success step
+      setStep(7);
     } catch (err) {
       alert(err.message || 'Failed to submit application to backend server.');
     }
@@ -228,18 +220,17 @@ export default function LoanApplicationPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-300 relative">
-      
       {/* PREREQUISITE INTERCEPTION MODAL */}
       {isIncompletePrerequisite && (
-        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-2xl max-w-lg w-full space-y-6 shadow-2xl text-center">
-            <div className="p-4 bg-amber-500/10 text-amber-400 rounded-2xl w-fit mx-auto">
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 p-6 sm:p-8 rounded-3xl max-w-lg w-full space-y-6 shadow-2xl text-center">
+            <div className="p-4 bg-amber-50 text-amber-600 rounded-2xl w-fit mx-auto border border-amber-100">
               <AlertTriangle className="h-10 w-10" />
             </div>
 
             <div className="space-y-2">
-              <h2 className="text-xl font-bold text-white">Incomplete Profile & Linked Bank Account</h2>
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <h2 className="text-xl font-bold text-slate-900">Incomplete Profile & Linked Bank Account</h2>
+              <p className="text-xs text-slate-500 leading-relaxed font-medium">
                 Before applying for a loan, you must complete your personal identity profile (PAN, Aadhaar, Income) and link a valid primary bank account.
               </p>
             </div>
@@ -254,333 +245,334 @@ export default function LoanApplicationPage() {
               </Button>
               <Button
                 variant="primary"
-                className="w-full justify-center bg-blue-600 hover:bg-blue-500"
+                className="w-full justify-center"
                 onClick={() => navigate(PATHS.BORROWER_PROFILE)}
               >
-                Complete Profile & Link Bank Account →
+                Complete Profile & Link Bank →
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="bg-slate-900/40 border border-slate-900 p-8 rounded-2xl relative">
-      <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-600/10 rounded-full blur-2xl pointer-events-none" />
-
-      {/* Stepper Wizard Progress Indicators */}
-      {step < 7 && (
-        <div className="flex justify-between items-center border-b border-slate-800 pb-6 mb-8 text-xs font-semibold text-slate-500">
-          {[
-            'Product',
-            'Terms',
-            'Personal',
-            'Income',
-            'Documents',
-            'Review',
-          ].map((label, idx) => {
-            const stepNum = idx + 1;
-            const isCompleted = step > stepNum;
-            const isActive = step === stepNum;
-            return (
-              <div key={label} className="flex items-center gap-2">
-                <span className={`h-6 w-6 rounded-full flex items-center justify-center font-bold transition-all ${
-                  isCompleted ? 'bg-blue-600 text-white' : isActive ? 'bg-blue-500/25 text-blue-400 border border-blue-500/40' : 'bg-slate-800 text-slate-500'
-                }`}>
-                  {isCompleted ? '✓' : stepNum}
-                </span>
-                <span className={`hidden sm:inline ${isActive ? 'text-white' : ''}`}>{label}</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* STEP 1: Select Loan Product Type */}
-      {step === 1 && (
-        <div className="space-y-6">
-          <div className="text-center space-y-1">
-            <h2 className="text-2xl font-bold text-white">Select Loan Product</h2>
-            <p className="text-sm text-slate-400">Choose the credit class that fits your requirements.</p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {MOCK_LOAN_PRODUCTS.map((prod) => (
-              <button
-                key={prod.id}
-                type="button"
-                onClick={() => handleProductSelect(prod.type)}
-                className="text-left p-6 rounded-xl border border-slate-800 bg-slate-900/30 hover:border-slate-700/80 transition-all group flex flex-col justify-between h-44"
-              >
-                <div>
-                  <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">
-                    {prod.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1">Interest Rate: {prod.interestRate}% P.A.</p>
-                </div>
-                <div className="flex justify-between items-center w-full mt-4 text-xs font-semibold text-slate-400">
-                  <span>Limit: Up to {formatCurrency(prod.maxAmount, false)}</span>
-                  <span className="text-blue-500 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                    Configure <ArrowRight className="h-3.5 w-3.5" />
-                  </span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* STEP 2: Configure Terms (Amount, tenure, purpose) */}
-      {step === 2 && (
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold text-white border-b border-slate-800 pb-2">Loan Parameters</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <div className="space-y-4">
-              <Input
-                label="Requested Loan Amount"
-                id="amount"
-                type="number"
-                value={formData.amount}
-                onChange={handleInputChange}
-                error={errors.amount}
-              />
-              <Input
-                label="Repayment Tenure (Months)"
-                id="tenureMonths"
-                type="number"
-                value={formData.tenureMonths}
-                onChange={handleInputChange}
-                error={errors.tenureMonths}
-              />
-              <Input
-                label="Purpose of Loan"
-                id="purpose"
-                type="text"
-                placeholder="Business expansion, home purchase..."
-                value={formData.purpose}
-                onChange={handleInputChange}
-                error={errors.purpose}
-              />
-            </div>
-            
-            {/* Live EMI calculation panel */}
-            <div className="bg-slate-900 border border-slate-850 p-5 rounded-xl space-y-4 text-sm">
-              <h3 className="font-bold text-white">Estimated Repayments</h3>
-              <div className="flex justify-between border-b border-slate-800 pb-2">
-                <span className="text-slate-400">Monthly EMI</span>
-                <span className="font-bold text-emerald-400 text-lg">{formatCurrency(emiPreview)}</span>
-              </div>
-              <div className="flex justify-between text-xs text-slate-500">
-                <span>Rate Applied</span>
-                <span>{selectedProduct?.interestRate}% P.A. (Fixed)</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-between pt-6 border-t border-slate-800">
-            <Button variant="secondary" onClick={handlePrevStep} leftIcon={ArrowLeft}>Back</Button>
-            <Button variant="primary" onClick={handleNextStep} rightIcon={ArrowRight}>Next</Button>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 3: Personal Information */}
-      {step === 3 && (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-            <h2 className="text-xl font-bold text-white">Personal Details</h2>
-            {isProfileLoaded && (
-              <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
-                <CheckCircle className="h-3.5 w-3.5" /> Pre-filled from Neon DB
-              </span>
-            )}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Full Name (as in PAN)"
-              id="name"
-              type="text"
-              value={formData.name}
-              onChange={handleInputChange}
-              error={errors.name}
-            />
-            <Input
-              label="Date of Birth"
-              id="dob"
-              type="date"
-              value={formData.dob}
-              onChange={handleInputChange}
-              error={errors.dob}
-            />
-            <Input
-              label="PAN Card Number"
-              id="pan"
-              type="text"
-              placeholder="ABCDE1234F"
-              value={formData.pan}
-              onChange={handleInputChange}
-              error={errors.pan}
-            />
-            <Input
-              label="12-Digit Aadhaar Number"
-              id="aadhaar"
-              type="text"
-              placeholder="123456789012"
-              value={formData.aadhaar}
-              onChange={handleInputChange}
-              error={errors.aadhaar}
-            />
-          </div>
-
-          <div className="flex justify-between pt-6 border-t border-slate-800">
-            <Button variant="secondary" onClick={handlePrevStep} leftIcon={ArrowLeft}>Back</Button>
-            <Button variant="primary" onClick={handleNextStep} rightIcon={ArrowRight}>Next</Button>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 4: Employment & Financial parameters */}
-      {step === 4 && (
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold text-white border-b border-slate-800 pb-2">Employment Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Monthly Salaried Income"
-              id="income"
-              type="number"
-              value={formData.income}
-              onChange={handleInputChange}
-              error={errors.income}
-            />
-            <Input
-              label="Employer or Company Name"
-              id="employer"
-              type="text"
-              value={formData.employer}
-              onChange={handleInputChange}
-              error={errors.employer}
-            />
-            <Input
-              label="Existing EMI Obligations (Monthly)"
-              id="existingEmi"
-              type="number"
-              value={formData.existingEmi}
-              onChange={handleInputChange}
-              error={errors.existingEmi}
-            />
-          </div>
-
-          <div className="flex justify-between pt-6 border-t border-slate-800">
-            <Button variant="secondary" onClick={handlePrevStep} leftIcon={ArrowLeft}>Back</Button>
-            <Button variant="primary" onClick={handleNextStep} rightIcon={ArrowRight}>Next</Button>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 5: Document Upload simulation */}
-      {step === 5 && (
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold text-white border-b border-slate-800 pb-2">Verify Documents</h2>
-          
-          <div className="space-y-4">
-            {selectedProduct?.requiredDocs.map((docType) => {
-              const fileName = formData.files[docType];
-              const fileError = errors[docType];
+      <div className="bg-white border border-slate-200/80 p-8 rounded-3xl relative shadow-xs">
+        {/* Stepper Wizard Progress Indicators */}
+        {step < 7 && (
+          <div className="flex justify-between items-center border-b border-slate-200 pb-6 mb-8 text-xs font-semibold text-slate-400">
+            {[
+              'Product',
+              'Terms',
+              'Personal',
+              'Income',
+              'Documents',
+              'Review',
+            ].map((label, idx) => {
+              const stepNum = idx + 1;
+              const isCompleted = step > stepNum;
+              const isActive = step === stepNum;
               return (
-                <div key={docType} className="p-4 bg-slate-900 border border-slate-850 rounded-xl space-y-3">
-                  <div className="flex justify-between items-center text-sm font-semibold">
-                    <span className="text-slate-300">{DOCUMENT_TYPE_LABELS[docType]}</span>
-                    {fileName ? (
-                      <span className="text-emerald-500 flex items-center gap-1"><CheckCircle className="h-4 w-4" /> Ready</span>
-                    ) : (
-                      <span className="text-amber-500">Awaiting PDF</span>
-                    )}
-                  </div>
-
-                  {fileName ? (
-                    <div className="flex items-center justify-between p-2.5 bg-slate-950 rounded-lg text-xs">
-                      <span className="text-slate-400 flex items-center gap-1.5"><FileText className="h-4 w-4 text-blue-500" /> {fileName}</span>
-                      <button type="button" onClick={() => handleRemoveFile(docType)} className="text-red-400 hover:text-red-300"><Trash2 className="h-4 w-4" /></button>
-                    </div>
-                  ) : (
-                    <div>
-                      {/* Fake trigger to select file */}
-                      <button
-                        type="button"
-                        onClick={() => handleFileUpload(docType, `${docType.toLowerCase()}_verification_doc.pdf`)}
-                        className="w-full h-16 border border-dashed border-slate-800 rounded-lg flex flex-col items-center justify-center text-slate-500 hover:text-slate-400 hover:border-slate-700 transition-all text-xs gap-1 cursor-pointer"
-                      >
-                        <UploadCloud className="h-5 w-5" />
-                        Click to simulate PDF attachment
-                      </button>
-                      {fileError && <p className="text-xs font-semibold text-red-500 mt-1.5">{fileError}</p>}
-                    </div>
-                  )}
+                <div key={label} className="flex items-center gap-2">
+                  <span
+                    className={`h-6 w-6 rounded-full flex items-center justify-center font-bold transition-all ${
+                      isCompleted
+                        ? 'bg-indigo-600 text-white'
+                        : isActive
+                        ? 'bg-indigo-50 text-indigo-600 border border-indigo-200 font-extrabold'
+                        : 'bg-slate-100 text-slate-400'
+                    }`}
+                  >
+                    {isCompleted ? '✓' : stepNum}
+                  </span>
+                  <span className={`hidden sm:inline ${isActive ? 'text-slate-900 font-bold' : ''}`}>{label}</span>
                 </div>
               );
             })}
           </div>
+        )}
 
-          <div className="flex justify-between pt-6 border-t border-slate-800">
-            <Button variant="secondary" onClick={handlePrevStep} leftIcon={ArrowLeft}>Back</Button>
-            <Button variant="primary" onClick={handleNextStep} rightIcon={ArrowRight}>Next</Button>
-          </div>
-        </div>
-      )}
-
-      {/* STEP 6: Final review of all fields */}
-      {step === 6 && (
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold text-white border-b border-slate-800 pb-2">Review & Submit</h2>
-          
-          <div className="bg-slate-900 border border-slate-850 p-5 rounded-xl divide-y divide-slate-800 text-sm space-y-4">
-            <div className="flex justify-between py-2">
-              <span className="text-slate-500">Loan Type</span>
-              <span className="text-slate-200 font-bold">{selectedProduct?.name}</span>
+        {/* STEP 1: Select Loan Product Type */}
+        {step === 1 && (
+          <div className="space-y-6">
+            <div className="text-center space-y-1">
+              <h2 className="text-2xl font-extrabold text-slate-900">Select Loan Product</h2>
+              <p className="text-sm text-slate-500">Choose the credit class that fits your requirements.</p>
             </div>
-            <div className="flex justify-between py-2">
-              <span className="text-slate-500">Requested Amount</span>
-              <span className="text-slate-200 font-bold">{formatCurrency(formData.amount, false)}</span>
-            </div>
-            <div className="flex justify-between py-2">
-              <span className="text-slate-500">Monthly EMI Estimated</span>
-              <span className="text-emerald-400 font-bold">{formatCurrency(emiPreview)}</span>
-            </div>
-            <div className="flex justify-between py-2">
-              <span className="text-slate-500">Applicant Name</span>
-              <span className="text-slate-200 font-medium">{formData.name}</span>
-            </div>
-            <div className="flex justify-between py-2">
-              <span className="text-slate-500">Files Attached</span>
-              <span className="text-slate-200 font-medium">{Object.keys(formData.files).length} Documents</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {MOCK_LOAN_PRODUCTS.map((prod) => (
+                <button
+                  key={prod.id}
+                  type="button"
+                  onClick={() => handleProductSelect(prod.type)}
+                  className="text-left p-6 rounded-2xl border border-slate-200/80 bg-slate-50 hover:bg-white hover:border-indigo-500/50 transition-all group flex flex-col justify-between h-44 cursor-pointer shadow-2xs hover:shadow-xs"
+                >
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                      {prod.name}
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-1">Interest Rate: {prod.interestRate}% P.A.</p>
+                  </div>
+                  <div className="flex justify-between items-center w-full mt-4 text-xs font-semibold text-slate-500">
+                    <span>Limit: Up to {formatCurrency(prod.maxAmount, false)}</span>
+                    <span className="text-indigo-600 font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                      Configure <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
+        )}
 
-          <div className="flex justify-between pt-6 border-t border-slate-800">
-            <Button variant="secondary" onClick={handlePrevStep} leftIcon={ArrowLeft}>Back</Button>
-            <Button variant="primary" onClick={handleSubmission}>Submit Application</Button>
-          </div>
-        </div>
-      )}
+        {/* STEP 2: Configure Terms */}
+        {step === 2 && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-extrabold text-slate-900 border-b border-slate-200 pb-3">Loan Parameters</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+              <div className="space-y-4">
+                <Input
+                  label="Requested Loan Amount"
+                  id="amount"
+                  type="number"
+                  value={formData.amount}
+                  onChange={handleInputChange}
+                  error={errors.amount}
+                />
+                <Input
+                  label="Repayment Tenure (Months)"
+                  id="tenureMonths"
+                  type="number"
+                  value={formData.tenureMonths}
+                  onChange={handleInputChange}
+                  error={errors.tenureMonths}
+                />
+                <Input
+                  label="Purpose of Loan"
+                  id="purpose"
+                  type="text"
+                  placeholder="Business expansion, home purchase..."
+                  value={formData.purpose}
+                  onChange={handleInputChange}
+                  error={errors.purpose}
+                />
+              </div>
+              
+              <div className="bg-slate-50 border border-slate-200/80 p-5 rounded-2xl space-y-4 text-sm">
+                <h3 className="font-bold text-slate-900">Estimated Repayments</h3>
+                <div className="flex justify-between border-b border-slate-200 pb-2">
+                  <span className="text-slate-500">Monthly EMI</span>
+                  <span className="font-black text-emerald-600 text-lg">{formatCurrency(emiPreview)}</span>
+                </div>
+                <div className="flex justify-between text-xs text-slate-500">
+                  <span>Rate Applied</span>
+                  <span className="font-bold text-slate-700">{selectedProduct?.interestRate}% P.A. (Fixed)</span>
+                </div>
+              </div>
+            </div>
 
-      {/* STEP 7: Success Node */}
-      {step === 7 && (
-        <div className="text-center space-y-6 py-8">
-          <div className="inline-flex p-4 bg-emerald-500/10 text-emerald-500 rounded-full">
-            <CheckCircle className="h-16 w-16" />
+            <div className="flex justify-between pt-6 border-t border-slate-200">
+              <Button variant="secondary" onClick={handlePrevStep} leftIcon={ArrowLeft}>Back</Button>
+              <Button variant="primary" onClick={handleNextStep} rightIcon={ArrowRight}>Next</Button>
+            </div>
           </div>
-          <div className="space-y-2">
-            <h2 className="text-3xl font-extrabold text-white">Application Received</h2>
-            <p className="text-slate-400 max-w-lg mx-auto text-sm sm:text-base leading-relaxed">
-              Your mortgage files have been saved successfully. Our credit underwriters will process document validations in 48 hours.
-            </p>
-          </div>
-          <div className="pt-4 flex gap-4 justify-center">
-            <Button variant="secondary" onClick={() => navigate(PATHS.BORROWER_DASHBOARD)}>Go to Dashboard</Button>
-            <Button variant="primary" onClick={() => navigate(PATHS.BORROWER_APPLICATIONS)}>Track Application</Button>
-          </div>
-        </div>
-      )}
+        )}
 
+        {/* STEP 3: Personal Information */}
+        {step === 3 && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+              <h2 className="text-xl font-extrabold text-slate-900">Personal Details</h2>
+              {isProfileLoaded && (
+                <span className="text-xs text-emerald-700 font-bold flex items-center gap-1 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                  <CheckCircle className="h-3.5 w-3.5 text-emerald-600" /> Pre-filled from Neon DB
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Full Name (as in PAN)"
+                id="name"
+                type="text"
+                value={formData.name}
+                onChange={handleInputChange}
+                error={errors.name}
+              />
+              <Input
+                label="Date of Birth"
+                id="dob"
+                type="date"
+                value={formData.dob}
+                onChange={handleInputChange}
+                error={errors.dob}
+              />
+              <Input
+                label="PAN Card Number"
+                id="pan"
+                type="text"
+                placeholder="ABCDE1234F"
+                value={formData.pan}
+                onChange={handleInputChange}
+                error={errors.pan}
+              />
+              <Input
+                label="12-Digit Aadhaar Number"
+                id="aadhaar"
+                type="text"
+                placeholder="123456789012"
+                value={formData.aadhaar}
+                onChange={handleInputChange}
+                error={errors.aadhaar}
+              />
+            </div>
+
+            <div className="flex justify-between pt-6 border-t border-slate-200">
+              <Button variant="secondary" onClick={handlePrevStep} leftIcon={ArrowLeft}>Back</Button>
+              <Button variant="primary" onClick={handleNextStep} rightIcon={ArrowRight}>Next</Button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4: Employment & Financial */}
+        {step === 4 && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-extrabold text-slate-900 border-b border-slate-200 pb-3">Employment Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Monthly Salaried Income"
+                id="income"
+                type="number"
+                value={formData.income}
+                onChange={handleInputChange}
+                error={errors.income}
+              />
+              <Input
+                label="Employer or Company Name"
+                id="employer"
+                type="text"
+                value={formData.employer}
+                onChange={handleInputChange}
+                error={errors.employer}
+              />
+              <Input
+                label="Existing EMI Obligations (Monthly)"
+                id="existingEmi"
+                type="number"
+                value={formData.existingEmi}
+                onChange={handleInputChange}
+                error={errors.existingEmi}
+              />
+            </div>
+
+            <div className="flex justify-between pt-6 border-t border-slate-200">
+              <Button variant="secondary" onClick={handlePrevStep} leftIcon={ArrowLeft}>Back</Button>
+              <Button variant="primary" onClick={handleNextStep} rightIcon={ArrowRight}>Next</Button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 5: Document Upload */}
+        {step === 5 && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-extrabold text-slate-900 border-b border-slate-200 pb-3">Verify Documents</h2>
+            
+            <div className="space-y-4">
+              {selectedProduct?.requiredDocs.map((docType) => {
+                const fileName = formData.files[docType];
+                const fileError = errors[docType];
+                return (
+                  <div key={docType} className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-3">
+                    <div className="flex justify-between items-center text-xs font-bold">
+                      <span className="text-slate-900">{DOCUMENT_TYPE_LABELS[docType]}</span>
+                      {fileName ? (
+                        <span className="text-emerald-700 flex items-center gap-1 font-bold"><CheckCircle className="h-4 w-4 text-emerald-600" /> Ready</span>
+                      ) : (
+                        <span className="text-amber-700 font-bold">Awaiting PDF</span>
+                      )}
+                    </div>
+
+                    {fileName ? (
+                      <div className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl text-xs">
+                        <span className="text-slate-700 font-semibold flex items-center gap-1.5"><FileText className="h-4 w-4 text-indigo-600" /> {fileName}</span>
+                        <button type="button" onClick={() => handleRemoveFile(docType)} className="text-rose-600 hover:text-rose-700 cursor-pointer"><Trash2 className="h-4 w-4" /></button>
+                      </div>
+                    ) : (
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => handleFileUpload(docType, `${docType.toLowerCase()}_verification_doc.pdf`)}
+                          className="w-full h-16 border border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center text-slate-500 hover:text-slate-900 hover:border-indigo-500 transition-all text-xs gap-1 cursor-pointer bg-white"
+                        >
+                          <UploadCloud className="h-5 w-5 text-indigo-600" />
+                          Click to simulate PDF attachment
+                        </button>
+                        {fileError && <p className="text-xs font-bold text-rose-600 mt-1.5">{fileError}</p>}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex justify-between pt-6 border-t border-slate-200">
+              <Button variant="secondary" onClick={handlePrevStep} leftIcon={ArrowLeft}>Back</Button>
+              <Button variant="primary" onClick={handleNextStep} rightIcon={ArrowRight}>Next</Button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 6: Final Review */}
+        {step === 6 && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-extrabold text-slate-900 border-b border-slate-200 pb-3">Review & Submit</h2>
+            
+            <div className="bg-slate-50 border border-slate-200/80 p-5 rounded-2xl divide-y divide-slate-200 text-sm space-y-4">
+              <div className="flex justify-between py-2">
+                <span className="text-slate-500">Loan Type</span>
+                <span className="text-slate-900 font-bold">{selectedProduct?.name}</span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="text-slate-500">Requested Amount</span>
+                <span className="text-slate-900 font-bold">{formatCurrency(formData.amount, false)}</span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="text-slate-500">Monthly EMI Estimated</span>
+                <span className="text-emerald-600 font-black">{formatCurrency(emiPreview)}</span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="text-slate-500">Applicant Name</span>
+                <span className="text-slate-900 font-semibold">{formData.name}</span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="text-slate-500">Files Attached</span>
+                <span className="text-slate-900 font-semibold">{Object.keys(formData.files).length} Documents</span>
+              </div>
+            </div>
+
+            <div className="flex justify-between pt-6 border-t border-slate-200">
+              <Button variant="secondary" onClick={handlePrevStep} leftIcon={ArrowLeft}>Back</Button>
+              <Button variant="primary" onClick={handleSubmission}>Submit Application</Button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 7: Success Node */}
+        {step === 7 && (
+          <div className="text-center space-y-6 py-8">
+            <div className="inline-flex p-4 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-200">
+              <CheckCircle className="h-16 w-16" />
+            </div>
+            <div className="space-y-2">
+              <h2 className="text-3xl font-black text-slate-900">Application Received</h2>
+              <p className="text-slate-500 max-w-lg mx-auto text-sm sm:text-base leading-relaxed font-medium">
+                Your mortgage files have been saved successfully. Our credit underwriters will process document validations in 48 hours.
+              </p>
+            </div>
+            <div className="pt-4 flex gap-4 justify-center">
+              <Button variant="secondary" onClick={() => navigate(PATHS.BORROWER_DASHBOARD)}>Go to Dashboard</Button>
+              <Button variant="primary" onClick={() => navigate(PATHS.BORROWER_APPLICATIONS)}>Track Application</Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import Button from '../../../components/common/Button';
 
 /**
  * ============================================================
- * STATEMENTS & REPORTS HUB PAGE COMPONENT (Borrower Portal)
+ * STATEMENTS & REPORTS HUB PAGE COMPONENT (LIGHT THEME)
  * Dedicated statements hub for tax certificates, full loan account
  * statements, interest certificates, and payment summaries.
  * ============================================================
@@ -21,22 +21,21 @@ export default function StatementsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
-      
       {/* 1. Header */}
-      <div className="border-b border-slate-800 pb-5">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Statements & Tax Reports</h1>
-        <p className="text-sm text-slate-400 mt-1">Download official bank account statements, tax certificates, and repayment summaries.</p>
+      <div className="border-b border-slate-200 pb-5">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Statements & Tax Reports</h1>
+        <p className="text-sm text-slate-500 mt-1">Download official bank account statements, tax certificates, and repayment summaries.</p>
       </div>
 
       {/* 2. Financial Year Selector */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900/40 p-4 border border-slate-800 rounded-2xl text-xs">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 border border-slate-200/80 rounded-2xl text-xs shadow-xs">
         <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-blue-400" />
-          <span className="font-bold text-white">Select Financial Year:</span>
+          <Calendar className="h-4 w-4 text-indigo-600" />
+          <span className="font-bold text-slate-900">Select Financial Year:</span>
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-900 focus:outline-none focus:border-indigo-600 font-semibold"
           >
             <option value="2026-2027">FY 2026 - 2027 (Current)</option>
             <option value="2025-2026">FY 2025 - 2026</option>
@@ -44,25 +43,25 @@ export default function StatementsPage() {
           </select>
         </div>
 
-        <span className="text-slate-400 font-medium">All reports generated with official digital seal</span>
+        <span className="text-slate-500 font-medium">All reports generated with official digital seal</span>
       </div>
 
       {/* 3. Statements Cards Grid */}
       <div className="space-y-4">
         {statementsList.map((st) => (
-          <div key={st.id} className="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-slate-700 transition-all">
+          <div key={st.id} className="p-5 bg-white border border-slate-200/80 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-indigo-500/50 transition-all shadow-xs">
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl flex-shrink-0">
+              <div className="p-3 bg-purple-50 text-purple-600 border border-purple-100 rounded-xl flex-shrink-0">
                 <BarChart3 className="h-6 w-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="text-md font-bold text-white">{st.title}</h3>
-                <p className="text-xs text-slate-400 max-w-xl">{st.desc}</p>
+                <h3 className="text-md font-bold text-slate-900">{st.title}</h3>
+                <p className="text-xs text-slate-500 max-w-xl font-medium">{st.desc}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3 self-end sm:self-auto">
-              <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-950 px-2 py-1 rounded border border-slate-850">
+              <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">
                 {st.type}
               </span>
               <Button
@@ -77,7 +76,6 @@ export default function StatementsPage() {
           </div>
         ))}
       </div>
-
     </div>
   );
 }

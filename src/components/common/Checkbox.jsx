@@ -3,7 +3,7 @@ import { AlertCircle } from 'lucide-react';
 
 /**
  * ============================================================
- * REUSABLE CUSTOM CHECKBOX COMPONENT
+ * REUSABLE CUSTOM CHECKBOX COMPONENT (LIGHT THEME)
  * Implements Ref Forwarding using forwardRef.
  * Standardizes styling for checkbox boxes, inline descriptions,
  * alignments, and error warnings.
@@ -18,7 +18,6 @@ const Checkbox = forwardRef(({
   disabled = false,
   ...props
 }, ref) => {
-  // Generate a unique ID fallback if none is provided to match labels to checkbox elements
   const checkboxId = id || `checkbox-${label ? label.toLowerCase().replace(/\s+/g, '-') : Math.random().toString(36).substr(2, 9)}`;
   const errorId = `${checkboxId}-error`;
 
@@ -36,8 +35,8 @@ const Checkbox = forwardRef(({
             aria-invalid={!!error}
             aria-describedby={error ? errorId : undefined}
             className={`
-              h-4 w-4 rounded border-slate-800 bg-slate-900 text-blue-600 focus:ring-2 focus:ring-blue-500/25 focus:ring-offset-0 focus:ring-offset-slate-950 transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none
-              ${error ? 'border-red-500 focus:ring-red-500/25' : 'border-slate-800 hover:border-slate-700 focus:ring-blue-500/25'}
+              h-4 w-4 rounded border-slate-300 bg-white text-indigo-600 focus:ring-2 focus:ring-indigo-500/20 focus:ring-offset-0 transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:pointer-events-none
+              ${error ? 'border-rose-500 focus:ring-rose-500/20' : 'border-slate-300 hover:border-slate-400 focus:ring-indigo-500/20'}
               ${className}
             `}
             {...props}
@@ -50,15 +49,15 @@ const Checkbox = forwardRef(({
             {label && (
               <label
                 htmlFor={checkboxId}
-                className={`text-sm font-semibold tracking-wide cursor-pointer ${
-                  disabled ? 'text-slate-500' : 'text-slate-300 hover:text-white'
+                className={`text-xs font-bold tracking-wide cursor-pointer ${
+                  disabled ? 'text-slate-400' : 'text-slate-700 hover:text-slate-900'
                 }`}
               >
                 {label}
               </label>
             )}
             {description && (
-              <p className={`text-xs ${disabled ? 'text-slate-600' : 'text-slate-500'}`}>
+              <p className={`text-xs ${disabled ? 'text-slate-400' : 'text-slate-500'}`}>
                 {description}
               </p>
             )}
@@ -68,11 +67,11 @@ const Checkbox = forwardRef(({
 
       {/* 3. Error Feedback Text block */}
       {error && (
-        <div className="pl-7"> {/* Indent error text to align with the labels, bypassing the checkbox box width */}
+        <div className="pl-7">
           <p
             id={errorId}
             role="alert"
-            className="text-xs font-semibold text-red-500 tracking-wide flex items-center gap-1.5 animate-in fade-in duration-150"
+            className="text-xs font-semibold text-rose-600 tracking-wide flex items-center gap-1.5 animate-in fade-in duration-150"
           >
             <AlertCircle className="h-3.5 w-3.5" />
             {error}
@@ -83,7 +82,6 @@ const Checkbox = forwardRef(({
   );
 });
 
-// Set display name for better React DevTools debugging output
 Checkbox.displayName = 'Checkbox';
 
 export default Checkbox;
