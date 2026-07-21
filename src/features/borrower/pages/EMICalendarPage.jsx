@@ -106,7 +106,7 @@ export default function EMICalendarPage() {
       {/* 2. TOP 4 KPI CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Next EMI */}
-        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-2 shadow-xs">
+        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-2 shadow-card hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300">
           <div className="flex justify-between items-start">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Next EMI</span>
             <div className="p-2.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-xl">
@@ -122,7 +122,7 @@ export default function EMICalendarPage() {
         </div>
 
         {/* Auto Debit Status */}
-        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-2 shadow-xs">
+        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-2 shadow-card hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300">
           <div className="flex justify-between items-start">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Auto Debit Mandate</span>
             <div className="p-2.5 bg-indigo-50 text-indigo-600 border border-indigo-100 rounded-xl">
@@ -134,7 +134,7 @@ export default function EMICalendarPage() {
         </div>
 
         {/* Total Paid */}
-        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-2 shadow-xs">
+        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-2 shadow-card hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300">
           <div className="flex justify-between items-start">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Repaid</span>
             <div className="p-2.5 bg-purple-50 text-purple-600 border border-purple-100 rounded-xl">
@@ -146,7 +146,7 @@ export default function EMICalendarPage() {
         </div>
 
         {/* Overdue */}
-        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-2 shadow-xs">
+        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-2 shadow-card hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300">
           <div className="flex justify-between items-start">
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Overdue</span>
             <div className="p-2.5 bg-slate-100 text-slate-600 border border-slate-200 rounded-xl">

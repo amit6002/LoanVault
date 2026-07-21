@@ -167,7 +167,7 @@ export default function BorrowerDashboard() {
       {/* 2. TOP 4 KPI CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* KPI 1: TOTAL OUTSTANDING */}
-        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-3 shadow-xs">
+        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-3 shadow-card hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300">
           <div className="flex justify-between items-start">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Outstanding</span>
             <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100">
@@ -181,7 +181,7 @@ export default function BorrowerDashboard() {
         </div>
 
         {/* KPI 2: NEXT EMI DUE */}
-        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-3 shadow-xs">
+        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-3 shadow-card hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300">
           <div className="flex justify-between items-start">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Next EMI Due</span>
             <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100">
@@ -199,7 +199,7 @@ export default function BorrowerDashboard() {
         </div>
 
         {/* KPI 3: ACTIVE LOANS */}
-        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-3 shadow-xs">
+        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-3 shadow-card hover:-translate-y-1 hover:shadow-xl hover:shadow-purple-500/10 transition-all duration-300">
           <div className="flex justify-between items-start">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Loans</span>
             <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl border border-purple-100">
@@ -213,7 +213,7 @@ export default function BorrowerDashboard() {
         </div>
 
         {/* KPI 4: CREDIT HEALTH GAUGE */}
-        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-2 flex flex-col justify-between shadow-xs">
+        <div className="bg-white border border-slate-200/80 p-6 rounded-2xl space-y-2 flex flex-col justify-between shadow-card hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300">
           <div className="flex justify-between items-start">
             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Credit Health</span>
             <div className="p-2 bg-amber-50 text-amber-600 rounded-xl border border-amber-100">

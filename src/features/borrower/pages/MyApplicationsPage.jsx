@@ -233,7 +233,7 @@ export default function MyApplicationsPage() {
                   setSelectedApp(app);
                   setModalTab('Timeline');
                 }}
-                className="p-6 bg-white border border-slate-200/80 hover:border-indigo-500/50 rounded-2xl space-y-4 cursor-pointer transition-all hover:shadow-md group shadow-xs"
+                className="p-6 bg-white border border-slate-200/80 hover:border-indigo-500/50 rounded-2xl space-y-4 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 group shadow-card"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
@@ -307,7 +307,7 @@ export default function MyApplicationsPage() {
       {/* DETAILS & TIMELINE POP-UP MODAL WINDOW */}
       {selectedApp && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl space-y-6 p-6 sm:p-8 relative text-slate-900">
+          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl space-y-6 p-6 sm:p-8 relative text-slate-900 animate-modal-scale">
             {/* Modal Header */}
             <div className="flex justify-between items-start border-b border-slate-200 pb-4">
               <div>

@@ -113,7 +113,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50">
-      <div className="max-w-md w-full space-y-8 bg-white border border-slate-200/80 p-8 rounded-3xl shadow-xl relative overflow-hidden text-slate-900">
+      <div className="max-w-md w-full space-y-8 bg-white border border-slate-200/80 p-8 rounded-3xl shadow-2xl shadow-indigo-500/10 hover:shadow-indigo-500/15 transition-all duration-300 relative overflow-hidden text-slate-900">
         {/* Headings */}
         <div className="text-center">
           <div className="inline-flex p-3.5 bg-indigo-50 border border-indigo-100 rounded-2xl text-indigo-600 mb-4 shadow-xs">
@@ -132,7 +132,7 @@ export default function LoginPage() {
         )}
 
         {/* HR / Interviewer 1-Click Quick Demo Login Box */}
-        <div className="p-4 rounded-2xl border border-indigo-200 bg-indigo-50/60 space-y-2.5">
+        <div className="p-4 rounded-2xl border border-indigo-200 bg-indigo-50/60 space-y-2.5 shadow-xs">
           <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-700">
             <Sparkles className="h-3.5 w-3.5 text-indigo-600" />
             <span>Demo Accounts (1-Click Login):</span>
@@ -141,28 +141,28 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => handleQuickDemoLogin('borrower@loanvault.com', 'Borrower@1234')}
-              className="p-2.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-bold transition-all text-left truncate cursor-pointer shadow-xs"
+              className="p-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold transition-all duration-200 hover:-translate-y-0.5 text-left truncate cursor-pointer shadow-xs hover:shadow-md"
             >
               👤 Borrower
             </button>
             <button
               type="button"
               onClick={() => handleQuickDemoLogin('officer@loanvault.com', 'Officer@1234')}
-              className="p-2.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-bold transition-all text-left truncate cursor-pointer shadow-xs"
+              className="p-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold transition-all duration-200 hover:-translate-y-0.5 text-left truncate cursor-pointer shadow-xs hover:shadow-md"
             >
               📋 Loan Officer
             </button>
             <button
               type="button"
               onClick={() => handleQuickDemoLogin('manager@loanvault.com', 'Manager@1234')}
-              className="p-2.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-bold transition-all text-left truncate cursor-pointer shadow-xs"
+              className="p-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold transition-all duration-200 hover:-translate-y-0.5 text-left truncate cursor-pointer shadow-xs hover:shadow-md"
             >
               👔 Loan Manager
             </button>
             <button
               type="button"
               onClick={() => handleQuickDemoLogin('admin@loanvault.com', 'Admin@1234')}
-              className="p-2.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-800 font-bold transition-all text-left truncate cursor-pointer shadow-xs"
+              className="p-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-bold transition-all duration-200 hover:-translate-y-0.5 text-left truncate cursor-pointer shadow-xs hover:shadow-md"
             >
               ⚙️ System Admin
             </button>

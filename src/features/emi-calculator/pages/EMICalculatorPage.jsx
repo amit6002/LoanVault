@@ -114,7 +114,7 @@ export default function EMICalculatorPage() {
         {/* 1. TOP SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           {/* LEFT: Sliders & Controls */}
-          <div className="lg:col-span-7 bg-white border border-slate-200/80 p-6 sm:p-8 rounded-2xl space-y-6 shadow-xs">
+          <div className="lg:col-span-7 bg-white border border-slate-200/80 p-6 sm:p-8 rounded-2xl space-y-6 shadow-card hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300">
             <h2 className="text-lg font-bold text-slate-900 border-b border-slate-200 pb-3 flex items-center gap-2">
               <Landmark className="h-5 w-5 text-indigo-600" />
               Calculator Parameters
@@ -201,7 +201,7 @@ export default function EMICalculatorPage() {
           </div>
 
           {/* RIGHT: Results display */}
-          <div className="lg:col-span-5 bg-white border border-slate-200/80 p-6 sm:p-8 rounded-2xl flex flex-col justify-center space-y-8 relative shadow-xs">
+          <div className="lg:col-span-5 bg-white border border-slate-200/80 p-6 sm:p-8 rounded-2xl flex flex-col justify-center space-y-8 relative shadow-xl shadow-indigo-600/10 hover:shadow-indigo-600/20 transition-all duration-300">
             <h2 className="text-lg font-bold text-slate-900 border-b border-slate-200 pb-3">
               Estimated Repayments
             </h2>
