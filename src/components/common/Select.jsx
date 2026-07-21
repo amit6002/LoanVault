@@ -3,7 +3,7 @@ import { AlertCircle } from 'lucide-react';
 
 /**
  * ============================================================
- * REUSABLE CUSTOM SELECT COMPONENT
+ * REUSABLE CUSTOM SELECT COMPONENT (LIGHT THEME)
  * Implements Ref Forwarding using forwardRef.
  * Standardizes styling for dropdown select menus, error alerts,
  * and label alignments.
@@ -19,7 +19,6 @@ const Select = forwardRef(({
   placeholder = 'Select an option',
   ...props
 }, ref) => {
-  // Generate a unique ID fallback if none is provided to match labels to select elements
   const selectId = id || `select-${label ? label.toLowerCase().replace(/\s+/g, '-') : Math.random().toString(36).substr(2, 9)}`;
   const errorId = `${selectId}-error`;
 
@@ -29,8 +28,8 @@ const Select = forwardRef(({
       {label && (
         <label
           htmlFor={selectId}
-          className={`text-sm font-semibold tracking-wide ${
-            disabled ? 'text-slate-500' : 'text-slate-300'
+          className={`text-xs font-bold uppercase tracking-wider ${
+            disabled ? 'text-slate-400' : 'text-slate-700'
           }`}
         >
           {label}
@@ -47,9 +46,9 @@ const Select = forwardRef(({
           aria-invalid={!!error}
           aria-describedby={error ? errorId : undefined}
           className={`
-            w-full h-11 bg-slate-900 border text-slate-100 rounded-lg text-sm font-medium transition-all duration-150 outline-none pr-10 pl-4
-            focus:ring-2 focus:ring-blue-500/25 focus:border-blue-500 disabled:opacity-50 disabled:pointer-events-none appearance-none cursor-pointer
-            ${error ? 'border-red-500 focus:ring-red-500/25 focus:border-red-500' : 'border-slate-800 hover:border-slate-700 focus:ring-blue-500/25 focus:border-blue-500'}
+            w-full h-11 bg-white border text-slate-900 rounded-xl text-sm font-medium transition-all duration-150 outline-none pr-10 pl-4
+            focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 disabled:bg-slate-100 disabled:opacity-60 disabled:pointer-events-none appearance-none cursor-pointer
+            ${error ? 'border-rose-500 focus:ring-rose-500/20 focus:border-rose-500' : 'border-slate-200 hover:border-slate-300'}
             ${className}
           `}
           {...props}
@@ -66,7 +65,7 @@ const Select = forwardRef(({
             <option 
               key={option.value} 
               value={option.value}
-              className="bg-slate-900 text-slate-100"
+              className="bg-white text-slate-900"
             >
               {option.label}
             </option>
@@ -75,10 +74,9 @@ const Select = forwardRef(({
 
         {/* Custom Arrow Icon + Error indicator overlay */}
         <div className="absolute right-3.5 flex items-center justify-center pointer-events-none gap-2">
-          {error && <AlertCircle className="h-5 w-5 text-red-500" />}
-          {/* Native-looking custom dropdown chevron arrow */}
+          {error && <AlertCircle className="h-4 w-4 text-rose-500" />}
           <svg
-            className={`h-4 w-4 ${disabled ? 'text-slate-600' : 'text-slate-400'}`}
+            className={`h-4 w-4 ${disabled ? 'text-slate-300' : 'text-slate-400'}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -98,7 +96,7 @@ const Select = forwardRef(({
         <p
           id={errorId}
           role="alert"
-          className="text-xs font-semibold text-red-500 tracking-wide flex items-center gap-1.5 animate-in fade-in duration-150"
+          className="text-xs font-semibold text-rose-600 tracking-wide flex items-center gap-1.5 animate-in fade-in duration-150"
         >
           {error}
         </p>
@@ -107,7 +105,6 @@ const Select = forwardRef(({
   );
 });
 
-// Set display name for better React DevTools debugging output
 Select.displayName = 'Select';
 
 export default Select;

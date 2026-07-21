@@ -8,42 +8,37 @@ import Button from '../../../components/common/Button';
 
 /**
  * ============================================================
- * EMI CALCULATOR PAGE
- * Implements standard EMI calculations and generates a 
- * month-by-month amortization schedule optimized using useMemo.
- * Refactored layout to place calculator parameters and results on top,
- * and the schedule table below.
+ * EMI CALCULATOR PAGE (LIGHT THEME)
+ * Interactive EMI calculations & month-by-month schedule.
  * ============================================================
  */
 export default function EMICalculatorPage() {
   const [inputs, setInputs] = useState({
-    amount: 1000000, // Default: ₹10 Lakhs
-    tenureYears: 5,  // Default: 5 Years
-    interestRate: 8.5, // Default: 8.5%
+    amount: 1000000,
+    tenureYears: 5,
+    interestRate: 8.5,
   });
 
   const [schedulePage, setSchedulePage] = useState(1);
-  const rowsPerPage = 12; // Show one year of schedule at a time
+  const rowsPerPage = 12;
 
-  // --- Dynamic Input Handlers ---
   const handleInputChange = (e) => {
     const { id, value } = e.target;
     let numericValue = parseFloat(value) || 0;
 
-    // Enforce limits to keep inputs within logical bounds
     if (id === 'amount') {
       numericValue = Math.min(numericValue, LIMITS.MAX_LOAN_AMOUNT);
     } else if (id === 'tenureYears') {
       numericValue = Math.min(numericValue, LIMITS.MAX_TENURE_MONTHS / 12);
     } else if (id === 'interestRate') {
-      numericValue = Math.min(numericValue, 30); // Cap interest rate at 30% for safety
+      numericValue = Math.min(numericValue, 30);
     }
 
     setInputs((prev) => ({
       ...prev,
       [id]: numericValue,
     }));
-    setSchedulePage(1); // Reset page on input change
+    setSchedulePage(1);
   };
 
   const handleSliderChange = (e) => {
@@ -55,25 +50,20 @@ export default function EMICalculatorPage() {
     setSchedulePage(1);
   };
 
-  // --- 🛠️ Core EMI Calculations (Optimized using useMemo) ---
   const calculationResults = useMemo(() => {
     const P = inputs.amount;
     const annualRate = inputs.interestRate;
-    const N = inputs.tenureYears * 12; // Total months
+    const N = inputs.tenureYears * 12;
 
     if (P <= 0 || annualRate <= 0 || N <= 0) {
       return { emi: 0, totalInterest: 0, totalPayable: 0, schedule: [] };
     }
 
-    // Monthly interest rate formula
     const r = annualRate / 12 / 100;
-
-    // Standard EMI formula: E = P * r * (1 + r)^n / ((1 + r)^n - 1)
     const emi = (P * r * Math.pow(1 + r, N)) / (Math.pow(1 + r, N) - 1);
     const totalPayable = emi * N;
     const totalInterest = totalPayable - P;
 
-    // Generate Month-by-Month Amortization Schedule
     const schedule = [];
     let outstandingBalance = P;
 
@@ -97,11 +87,10 @@ export default function EMICalculatorPage() {
       totalPayable,
       schedule,
     };
-  }, [inputs.amount, inputs.tenureYears, inputs.interestRate]); // Only recompute if inputs change
+  }, [inputs.amount, inputs.tenureYears, inputs.interestRate]);
 
   const { emi, totalInterest, totalPayable, schedule } = calculationResults;
 
-  // Pagination for the schedule table
   const paginatedSchedule = useMemo(() => {
     const startIndex = (schedulePage - 1) * rowsPerPage;
     return schedule.slice(startIndex, startIndex + rowsPerPage);
@@ -110,34 +99,32 @@ export default function EMICalculatorPage() {
   const totalPages = Math.ceil(schedule.length / rowsPerPage);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 text-slate-900 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto space-y-8">
-
         {/* Page Headings */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             Interactive EMI Calculator
           </h1>
-          <p className="text-md sm:text-lg text-slate-400">
+          <p className="text-md sm:text-lg text-slate-500 font-medium">
             Configure your loan parameters to instantly estimate monthly repayments and check the full amortization schedule.
           </p>
         </div>
 
-        {/* 1. TOP SECTION: Calculator parameters & Results Cards */}
+        {/* 1. TOP SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-
-          {/* LEFT: Sliders & Form Controls (7 columns) */}
-          <div className="lg:col-span-7 bg-slate-900/40 border border-slate-900 p-6 rounded-2xl space-y-6">
-            <h2 className="text-lg font-bold text-white border-b border-slate-800 pb-3 flex items-center gap-2">
-              <Landmark className="h-5 w-5 text-blue-500" />
+          {/* LEFT: Sliders & Controls */}
+          <div className="lg:col-span-7 bg-white border border-slate-200/80 p-6 sm:p-8 rounded-2xl space-y-6 shadow-xs">
+            <h2 className="text-lg font-bold text-slate-900 border-b border-slate-200 pb-3 flex items-center gap-2">
+              <Landmark className="h-5 w-5 text-indigo-600" />
               Calculator Parameters
             </h2>
 
             {/* A. Loan Amount Configuration */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-semibold text-slate-300">Loan Amount</span>
-                <span className="text-md font-bold text-blue-400">{formatCurrency(inputs.amount, false)}</span>
+                <span className="text-xs font-bold text-slate-400 uppercase">Loan Amount</span>
+                <span className="text-md font-extrabold text-indigo-600">{formatCurrency(inputs.amount, false)}</span>
               </div>
               <input
                 type="range"
@@ -147,7 +134,7 @@ export default function EMICalculatorPage() {
                 step={50000}
                 value={inputs.amount}
                 onChange={handleSliderChange}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500 focus:outline-none"
+                className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none"
               />
               <Input
                 id="amount"
@@ -162,8 +149,8 @@ export default function EMICalculatorPage() {
             {/* B. Interest Rate Configuration */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-semibold text-slate-300">Interest Rate (P.A.)</span>
-                <span className="text-md font-bold text-blue-400">{inputs.interestRate}%</span>
+                <span className="text-xs font-bold text-slate-400 uppercase">Interest Rate (P.A.)</span>
+                <span className="text-md font-extrabold text-indigo-600">{inputs.interestRate}%</span>
               </div>
               <input
                 type="range"
@@ -173,7 +160,7 @@ export default function EMICalculatorPage() {
                 step={0.1}
                 value={inputs.interestRate}
                 onChange={handleSliderChange}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500 focus:outline-none"
+                className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none"
               />
               <Input
                 id="interestRate"
@@ -189,8 +176,8 @@ export default function EMICalculatorPage() {
             {/* C. Loan Tenure Configuration */}
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm font-semibold text-slate-300">Tenure (Years)</span>
-                <span className="text-md font-bold text-blue-400">{inputs.tenureYears} Years</span>
+                <span className="text-xs font-bold text-slate-400 uppercase">Tenure (Years)</span>
+                <span className="text-md font-extrabold text-indigo-600">{inputs.tenureYears} Years</span>
               </div>
               <input
                 type="range"
@@ -200,7 +187,7 @@ export default function EMICalculatorPage() {
                 step={1}
                 value={inputs.tenureYears}
                 onChange={handleSliderChange}
-                className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500 focus:outline-none"
+                className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600 focus:outline-none"
               />
               <Input
                 id="tenureYears"
@@ -213,32 +200,30 @@ export default function EMICalculatorPage() {
             </div>
           </div>
 
-          {/* RIGHT: Results display (5 columns) */}
-          <div className="lg:col-span-5 bg-slate-900/60 border border-slate-900 p-6 rounded-2xl flex flex-col justify-center space-y-8 relative overflow-hidden">
-            <div className="absolute -top-10 -right-10 w-24 h-24 bg-blue-600/10 rounded-full blur-xl pointer-events-none" />
-
-            <h2 className="text-lg font-bold text-white border-b border-slate-800 pb-3 flex items-center gap-2">
+          {/* RIGHT: Results display */}
+          <div className="lg:col-span-5 bg-white border border-slate-200/80 p-6 sm:p-8 rounded-2xl flex flex-col justify-center space-y-8 relative shadow-xs">
+            <h2 className="text-lg font-bold text-slate-900 border-b border-slate-200 pb-3">
               Estimated Repayments
             </h2>
 
             <div className="space-y-6">
-              <div className="border-b border-slate-800 pb-4">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Monthly EMI Outgoings</span>
-                <h3 className="text-3xl sm:text-4xl font-extrabold text-white mt-1">
+              <div className="border-b border-slate-200 pb-4">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Monthly EMI</span>
+                <h3 className="text-3xl sm:text-4xl font-black text-slate-900 mt-1">
                   {formatCurrency(emi)}
                 </h3>
               </div>
 
-              <div className="border-b border-slate-800 pb-4">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Interest Payable</span>
-                <h3 className="text-2xl font-extrabold text-blue-400 mt-1">
+              <div className="border-b border-slate-200 pb-4">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Interest</span>
+                <h3 className="text-2xl font-black text-indigo-600 mt-1">
                   {formatCurrency(totalInterest)}
                 </h3>
               </div>
 
               <div>
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Principal + Interest</span>
-                <h3 className="text-2xl font-extrabold text-emerald-400 mt-1">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Payable</span>
+                <h3 className="text-2xl font-black text-emerald-600 mt-1">
                   {formatCurrency(totalPayable)}
                 </h3>
               </div>
@@ -246,34 +231,33 @@ export default function EMICalculatorPage() {
           </div>
         </div>
 
-        {/* 2. BOTTOM SECTION: Amortization Schedule Table & CTA */}
+        {/* 2. BOTTOM SECTION: Amortization Schedule Table */}
         <div className="space-y-6">
-          {/* Amortization Table */}
-          <div className="bg-slate-900/40 border border-slate-900 rounded-2xl overflow-hidden p-6 space-y-4">
-            <h3 className="text-md font-bold text-white flex items-center gap-2">
-              <Info className="h-4.5 w-4.5 text-blue-400" />
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-4 shadow-xs">
+            <h3 className="text-md font-bold text-slate-900 flex items-center gap-2">
+              <Info className="h-4.5 w-4.5 text-indigo-600" />
               Amortization Payment Schedule
             </h3>
 
-            <div className="overflow-x-auto border border-slate-800 rounded-xl">
-              <table className="min-w-full divide-y divide-slate-800 text-sm">
-                <thead className="bg-slate-900/80">
+            <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+              <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <thead className="bg-slate-50">
                   <tr>
-                    <th className="px-4 py-3 text-left font-semibold text-slate-400">Month</th>
-                    <th className="px-4 py-3 text-right font-semibold text-slate-400">Principal</th>
-                    <th className="px-4 py-3 text-right font-semibold text-slate-400">Interest</th>
-                    <th className="px-4 py-3 text-right font-semibold text-slate-400">Total EMI</th>
-                    <th className="px-4 py-3 text-right font-semibold text-slate-400">Balance</th>
+                    <th className="px-4 py-3 text-left font-bold text-slate-400 uppercase text-[10px]">Month</th>
+                    <th className="px-4 py-3 text-right font-bold text-slate-400 uppercase text-[10px]">Principal</th>
+                    <th className="px-4 py-3 text-right font-bold text-slate-400 uppercase text-[10px]">Interest</th>
+                    <th className="px-4 py-3 text-right font-bold text-slate-400 uppercase text-[10px]">Total EMI</th>
+                    <th className="px-4 py-3 text-right font-bold text-slate-400 uppercase text-[10px]">Balance</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-850 bg-slate-900/20">
+                <tbody className="divide-y divide-slate-200 text-slate-800">
                   {paginatedSchedule.map((row) => (
-                    <tr key={row.month} className="hover:bg-slate-900/40 transition-colors">
-                      <td className="px-4 py-3 font-medium text-slate-300">Month {row.month}</td>
-                      <td className="px-4 py-3 text-right text-slate-300">{formatCurrency(row.principal)}</td>
-                      <td className="px-4 py-3 text-right text-slate-400">{formatCurrency(row.interest)}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-slate-200">{formatCurrency(row.emi)}</td>
-                      <td className="px-4 py-3 text-right text-blue-400 font-medium">{formatCurrency(row.balance)}</td>
+                    <tr key={row.month} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-3 font-semibold text-slate-900">Month {row.month}</td>
+                      <td className="px-4 py-3 text-right font-mono">{formatCurrency(row.principal)}</td>
+                      <td className="px-4 py-3 text-right font-mono text-slate-500">{formatCurrency(row.interest)}</td>
+                      <td className="px-4 py-3 text-right font-mono font-bold text-slate-900">{formatCurrency(row.emi)}</td>
+                      <td className="px-4 py-3 text-right font-mono text-indigo-600 font-bold">{formatCurrency(row.balance)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -283,7 +267,7 @@ export default function EMICalculatorPage() {
             {/* Table Pagination Controls */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between pt-2">
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-slate-500 font-medium">
                   Showing Year {schedulePage} of {totalPages}
                 </span>
                 <div className="flex gap-2">
@@ -309,8 +293,8 @@ export default function EMICalculatorPage() {
           </div>
 
           {/* Apply CTA Banner */}
-          <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-slate-300 text-center md:text-left">
+          <div className="p-5 rounded-2xl border border-indigo-200 bg-indigo-50/60 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-indigo-900 font-semibold text-center md:text-left">
               Happy with the rates? Apply for a loan digital account onboarding in 10 minutes.
             </p>
             <Link to={PATHS.REGISTER}>
@@ -320,7 +304,6 @@ export default function EMICalculatorPage() {
             </Link>
           </div>
         </div>
-
       </div>
     </div>
   );

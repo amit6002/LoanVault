@@ -6,17 +6,14 @@ import Button from '../components/common/Button';
 
 /**
  * ============================================================
- * PUBLIC LAYOUT COMPONENT
- * The structural layout skeleton for all unauthenticated pages.
- * Includes global header, responsive navigation, and footer.
- * Refactored to utilize our design system Button component.
+ * PUBLIC LAYOUT COMPONENT (LIGHT THEME)
+ * Structural layout for unauthenticated landing and calculator pages.
  * ============================================================
  */
 export default function PublicLayout() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
 
-  // Helper to determine if a route is currently active
   const isActive = (path) => location.pathname === path;
 
   const navLinks = [
@@ -25,32 +22,32 @@ export default function PublicLayout() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 antialiased">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased">
       {/* HEADER / NAVIGATION */}
-      <header className="sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             
             {/* Logo Section */}
             <div className="flex items-center">
               <Link to={PATHS.HOME} className="flex items-center gap-2 group">
-                <div className="p-2 bg-blue-600 rounded-lg text-white group-hover:bg-blue-500 transition-colors">
-                  <Landmark className="h-6 w-6" />
+                <div className="p-2 bg-indigo-600 rounded-xl text-white group-hover:bg-indigo-700 transition-colors shadow-sm shadow-indigo-600/30">
+                  <Landmark className="h-5 w-5" />
                 </div>
-                <span className="text-xl font-bold tracking-tight text-white group-hover:text-blue-400 transition-colors">
+                <span className="text-xl font-bold tracking-tight text-slate-900 group-hover:text-indigo-600 transition-colors">
                   LoanVault
                 </span>
               </Link>
             </div>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center gap-6">
+            <nav className="hidden md:flex items-center gap-8">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`text-sm font-medium transition-colors hover:text-blue-400 ${
-                    isActive(link.path) ? 'text-blue-500 font-semibold' : 'text-slate-300'
+                  className={`text-sm font-semibold transition-colors hover:text-indigo-600 ${
+                    isActive(link.path) ? 'text-indigo-600 font-bold' : 'text-slate-600'
                   }`}
                 >
                   {link.label}
@@ -62,7 +59,7 @@ export default function PublicLayout() {
             <div className="hidden md:flex items-center gap-4">
               <Link
                 to={PATHS.LOGIN}
-                className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+                className="text-sm font-semibold text-slate-700 hover:text-indigo-600 transition-colors px-3 py-2"
               >
                 Sign In
               </Link>
@@ -88,28 +85,28 @@ export default function PublicLayout() {
 
         {/* Mobile Navigation Dropdown Menu */}
         {isMenuOpen && (
-          <div className="md:hidden border-b border-slate-800 bg-slate-900 animate-in fade-in slide-in-from-top-4 duration-200">
-            <div className="px-2 pt-2 pb-3 space-y-1">
+          <div className="md:hidden border-b border-slate-200 bg-white animate-in fade-in slide-in-from-top-4 duration-200 shadow-md">
+            <div className="px-4 pt-3 pb-3 space-y-1">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                  className={`block px-3 py-2 rounded-xl text-base font-semibold transition-colors ${
                     isActive(link.path)
-                      ? 'bg-slate-800 text-blue-500'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      ? 'bg-indigo-50 text-indigo-600'
+                      : 'text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  {link.label
-                }</Link>
+                  {link.label}
+                </Link>
               ))}
             </div>
-            <div className="pt-4 pb-3 border-t border-slate-800 px-5 flex flex-col gap-3">
+            <div className="pt-3 pb-4 border-t border-slate-200 px-4 flex flex-col gap-3">
               <Link
                 to={PATHS.LOGIN}
                 onClick={() => setIsMenuOpen(false)}
-                className="block text-center py-2 text-base font-medium text-slate-300 hover:text-white transition-colors"
+                className="block text-center py-2 text-base font-semibold text-slate-700 hover:text-indigo-600"
               >
                 Sign In
               </Link>
@@ -129,24 +126,24 @@ export default function PublicLayout() {
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-slate-950 border-t border-slate-900">
+      <footer className="bg-white border-t border-slate-200">
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-slate-800 rounded text-blue-500">
+            <div className="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg border border-indigo-100">
               <Landmark className="h-5 w-5" />
             </div>
-            <span className="text-md font-bold tracking-tight text-white">
+            <span className="text-md font-bold tracking-tight text-slate-900">
               LoanVault
             </span>
           </div>
-          <p className="text-sm text-slate-500 text-center md:text-left">
+          <p className="text-xs text-slate-500 text-center md:text-left">
             &copy; {new Date().getFullYear()} LoanVault Financial Technologies. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <a href="#" className="text-xs text-slate-500 hover:text-slate-400 transition-colors">
+            <a href="#" className="text-xs text-slate-500 hover:text-slate-800 transition-colors">
               Privacy Policy
             </a>
-            <a href="#" className="text-xs text-slate-500 hover:text-slate-400 transition-colors">
+            <a href="#" className="text-xs text-slate-500 hover:text-slate-800 transition-colors">
               Terms of Service
             </a>
           </div>

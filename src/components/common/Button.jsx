@@ -20,21 +20,22 @@ export default function Button({
   ...props
 }) {
   // 1. Base styles shared by all buttons
-  const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-lg transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100';
+  const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-150 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-50 disabled:opacity-50 disabled:pointer-events-none disabled:active:scale-100 cursor-pointer';
 
   // 2. Styling maps for our visual variants
   const variants = {
-    primary: 'bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white focus:ring-blue-500 shadow-md shadow-blue-500/10 hover:shadow-blue-500/20',
-    secondary: 'bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-200 border border-slate-700 focus:ring-slate-500',
-    danger: 'bg-red-600 hover:bg-red-500 active:bg-red-700 text-white focus:ring-red-500 shadow-md shadow-red-500/10 hover:shadow-red-500/20',
-    ghost: 'bg-transparent hover:bg-slate-900 active:bg-slate-850 text-slate-400 hover:text-white focus:ring-slate-700',
+    primary: 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white focus:ring-indigo-500 shadow-sm shadow-indigo-600/20 hover:shadow-indigo-600/30',
+    secondary: 'bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 border border-slate-200 focus:ring-slate-400',
+    outline: 'border border-slate-300 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 hover:text-slate-900 focus:ring-indigo-500 shadow-xs',
+    danger: 'bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white focus:ring-rose-500 shadow-sm shadow-rose-600/20',
+    ghost: 'bg-transparent hover:bg-slate-100 active:bg-slate-200 text-slate-600 hover:text-slate-900 focus:ring-slate-400',
   };
 
   // 3. Padding and font size configurations based on size
   const sizes = {
     sm: 'px-3 py-1.5 text-xs gap-1.5',
     md: 'px-4 py-2 text-sm gap-2',
-    lg: 'px-5 py-3 text-base gap-2.5',
+    lg: 'px-5 py-2.5 text-base gap-2.5',
   };
 
   return (
@@ -44,8 +45,8 @@ export default function Button({
       aria-disabled={disabled || isLoading}
       className={`
         ${baseStyles} 
-        ${variants[variant]} 
-        ${sizes[size]} 
+        ${variants[variant] || variants.primary} 
+        ${sizes[size] || sizes.md} 
         ${className}
       `}
       {...props}
@@ -59,7 +60,7 @@ export default function Button({
       )}
 
       {/* 3. Button Text (wrapped children) */}
-      <span>{children}</span>
+      {children && <span>{children}</span>}
 
       {/* 4. Right Icon (rendered only if not loading) */}
       {!isLoading && RightIcon && (

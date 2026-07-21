@@ -11,7 +11,7 @@ import { ticketStore } from '../../../utils/ticketStore';
 
 /**
  * ============================================================
- * FULL HELP CENTER PAGE COMPONENT
+ * FULL HELP CENTER PAGE COMPONENT (LIGHT THEME)
  * Provides real-time Borrower Helpdesk, live chat with assigned Loan Officer,
  * support ticket creation, and status workflow.
  * ============================================================
@@ -136,25 +136,25 @@ export default function SupportPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* 1. Header Bar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-5">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-            <LifeBuoy className="h-7 w-7 text-blue-500" />
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+            <LifeBuoy className="h-7 w-7 text-indigo-600" />
             Help & Support Center
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 mt-1">
             Connect directly with your assigned Loan Officer and manage help desk queries.
           </p>
         </div>
 
         {/* Tab Switch Buttons */}
-        <div className="flex bg-slate-900 border border-slate-800 p-1 rounded-xl">
+        <div className="flex bg-slate-100 border border-slate-200 p-1 rounded-xl">
           <button
             onClick={() => setActiveTab('Chat')}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'Chat'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <MessageSquare className="h-4 w-4" />
@@ -162,10 +162,10 @@ export default function SupportPage() {
           </button>
           <button
             onClick={() => setActiveTab('NewTicket')}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
               activeTab === 'NewTicket'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <PlusCircle className="h-4 w-4" />
@@ -176,36 +176,36 @@ export default function SupportPage() {
 
       {/* Success Notification Banner */}
       {successMessage && (
-        <div className="flex items-start gap-3 p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 animate-in fade-in duration-300">
-          <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-emerald-400 font-medium">{successMessage}</p>
+        <div className="flex items-start gap-3 p-4 rounded-2xl border border-emerald-200 bg-emerald-50 animate-in fade-in duration-300">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-emerald-800 font-medium">{successMessage}</p>
         </div>
       )}
 
       {/* Assigned Relationship Manager info card */}
-      <div className="p-4 bg-slate-900/60 border border-slate-800 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs">
+      <div className="p-4 bg-white border border-slate-200/80 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-sm">
+          <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
             RM
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-white text-sm">Vikram Sethi</span>
-              <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
+              <span className="font-bold text-slate-900 text-sm">Vikram Sethi</span>
+              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
                 Online Officer
               </span>
             </div>
-            <p className="text-slate-400 text-xs mt-0.5">Assigned Senior Underwriting Officer</p>
+            <p className="text-slate-500 text-xs mt-0.5">Assigned Senior Underwriting Officer</p>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-slate-400 text-xs border-t sm:border-t-0 sm:border-l border-slate-800 pt-2 sm:pt-0 sm:pl-4">
+        <div className="flex items-center gap-6 text-slate-500 text-xs border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-6">
           <div>
-            <span className="block text-[10px] text-slate-500 font-semibold uppercase">Avg Response</span>
-            <span className="text-white font-bold">&lt; 15 Mins</span>
+            <span className="block text-[10px] text-slate-400 font-bold uppercase">Avg Response</span>
+            <span className="text-slate-900 font-bold">&lt; 15 Mins</span>
           </div>
           <div>
-            <span className="block text-[10px] text-slate-500 font-semibold uppercase">Working Hours</span>
-            <span className="text-white font-bold">9:00 AM - 7:00 PM</span>
+            <span className="block text-[10px] text-slate-400 font-bold uppercase">Working Hours</span>
+            <span className="text-slate-900 font-bold">9:00 AM - 7:00 PM</span>
           </div>
         </div>
       </div>
@@ -214,15 +214,15 @@ export default function SupportPage() {
       {activeTab === 'Chat' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Tickets List (4 cols) */}
-          <div className="lg:col-span-4 bg-slate-900/50 border border-slate-800 p-4 rounded-2xl space-y-3">
-            <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-800">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-blue-400" />
+          <div className="lg:col-span-4 bg-white border border-slate-200/80 p-4 rounded-2xl space-y-3 shadow-xs">
+            <div className="flex justify-between items-center px-1 pb-2 border-b border-slate-200">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-indigo-600" />
                 Support Threads ({tickets.length})
               </h3>
               <button
                 onClick={loadTickets}
-                className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
+                className="text-slate-400 hover:text-slate-800 p-1 rounded-lg transition-colors cursor-pointer"
                 title="Refresh Tickets"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
@@ -230,7 +230,7 @@ export default function SupportPage() {
             </div>
 
             {tickets.length === 0 ? (
-              <div className="py-8 text-center text-slate-500 text-xs">
+              <div className="py-8 text-center text-slate-400 text-xs">
                 No active support queries found.
               </div>
             ) : (
@@ -243,30 +243,30 @@ export default function SupportPage() {
                     <button
                       key={tid}
                       onClick={() => handleSelectTicket(tid)}
-                      className={`w-full text-left p-3 rounded-xl border transition-all relative ${
+                      className={`w-full text-left p-3 rounded-xl border transition-all relative cursor-pointer ${
                         isSelected
-                          ? 'bg-blue-600/10 border-blue-500/50 text-white shadow-md'
-                          : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
+                          ? 'bg-indigo-50/80 border-indigo-500/50 text-slate-900 shadow-xs'
+                          : 'bg-slate-50 border-slate-200/60 text-slate-600 hover:bg-slate-100'
                       }`}
                     >
                       {hasUnread && (
-                        <span className="absolute top-3 right-3 w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                        <span className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
                       )}
                       <div className="flex justify-between items-center mb-1">
-                        <span className="text-[11px] font-mono font-bold text-slate-500">{tid}</span>
+                        <span className="text-[11px] font-mono font-bold text-slate-400">{tid}</span>
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                             t.status === 'RESOLVED'
-                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                               : t.status === 'OFFICER_REPLIED'
-                              ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                              : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                              ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                              : 'bg-amber-50 text-amber-700 border border-amber-200'
                           }`}
                         >
                           {t.status}
                         </span>
                       </div>
-                      <h4 className="text-xs font-bold text-white truncate">{t.subject}</h4>
+                      <h4 className="text-xs font-bold text-slate-900 truncate">{t.subject}</h4>
                       <p className="text-[11px] text-slate-500 mt-1 truncate">
                         {t.messages && t.messages.length > 0
                           ? t.messages[t.messages.length - 1].text
@@ -280,19 +280,19 @@ export default function SupportPage() {
           </div>
 
           {/* Right Column: Chat Window (8 cols) */}
-          <div className="lg:col-span-8 bg-slate-900/50 border border-slate-800 p-6 rounded-2xl space-y-6">
+          <div className="lg:col-span-8 bg-white border border-slate-200/80 p-6 rounded-2xl space-y-6 shadow-xs">
             {currentTicket ? (
               <>
                 {/* Selected Ticket Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 pb-4">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-slate-500">
+                      <span className="text-xs font-mono font-bold text-slate-400">
                         {currentTicket.id || currentTicket.ticketId}
                       </span>
-                      <span className="text-xs text-slate-400">· {currentTicket.category}</span>
+                      <span className="text-xs text-slate-500">· {currentTicket.category}</span>
                     </div>
-                    <h3 className="text-lg font-bold text-white mt-0.5">{currentTicket.subject}</h3>
+                    <h3 className="text-lg font-bold text-slate-900 mt-0.5">{currentTicket.subject}</h3>
                   </div>
 
                   {currentTicket.status !== 'RESOLVED' && (
@@ -301,7 +301,7 @@ export default function SupportPage() {
                       size="sm"
                       onClick={() => handleMarkResolved(currentTicket.id || currentTicket.ticketId)}
                       leftIcon={CheckCircle2}
-                      className="text-xs text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                      className="text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50"
                     >
                       Mark Resolved
                     </Button>
@@ -310,13 +310,13 @@ export default function SupportPage() {
 
                 {/* Resolution Banner */}
                 {isOfficerReplied && (
-                  <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-center justify-between text-xs">
-                    <span className="text-blue-300 font-medium">
+                  <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-center justify-between text-xs">
+                    <span className="text-indigo-900 font-medium">
                       Officer replied! Did this resolve your query?
                     </span>
                     <button
                       onClick={() => handleMarkResolved(currentTicket.id || currentTicket.ticketId)}
-                      className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold transition-all"
+                      className="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold transition-all cursor-pointer"
                     >
                       Yes, Resolve Ticket
                     </button>
@@ -324,11 +324,11 @@ export default function SupportPage() {
                 )}
 
                 {/* Messages Thread Container */}
-                <div className="space-y-4 max-h-[380px] overflow-y-auto p-3 bg-slate-950/80 rounded-xl border border-slate-800">
+                <div className="space-y-4 max-h-[380px] overflow-y-auto p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
                   {/* Original Description */}
                   <div className="flex flex-col items-start space-y-1 max-w-[85%]">
-                    <span className="text-[10px] text-slate-500 font-semibold">You (Original Description)</span>
-                    <div className="p-3 bg-slate-900 border border-slate-800 rounded-2xl rounded-tl-none text-xs text-slate-200 leading-relaxed">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase">You (Original Description)</span>
+                    <div className="p-3.5 bg-white border border-slate-200 rounded-2xl rounded-tl-none text-xs text-slate-800 leading-relaxed shadow-2xs">
                       {currentTicket.description}
                     </div>
                   </div>
@@ -344,20 +344,20 @@ export default function SupportPage() {
                             isBorrower ? 'ml-auto items-end' : 'items-start'
                           }`}
                         >
-                          <span className="text-[10px] text-slate-500 font-semibold">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase">
                             {isBorrower ? 'You' : m.senderName || 'Loan Officer'}
                           </span>
                           <div
-                            className={`p-3 rounded-2xl text-xs leading-relaxed ${
+                            className={`p-3.5 rounded-2xl text-xs leading-relaxed ${
                               isBorrower
-                                ? 'bg-blue-600 text-white rounded-tr-none shadow-md'
-                                : 'bg-slate-800 text-slate-100 border border-slate-700 rounded-tl-none'
+                                ? 'bg-indigo-600 text-white rounded-tr-none shadow-xs'
+                                : 'bg-white text-slate-800 border border-slate-200 rounded-tl-none shadow-2xs'
                             }`}
                           >
                             {m.text}
                           </div>
                           {m.timestamp && (
-                            <span className="text-[9px] text-slate-600">{m.timestamp}</span>
+                            <span className="text-[9px] text-slate-400">{m.timestamp}</span>
                           )}
                         </div>
                       );
@@ -372,7 +372,7 @@ export default function SupportPage() {
                       placeholder="Type your reply to the Loan Officer..."
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
-                      className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+                      className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-600 transition-colors shadow-xs"
                       disabled={isLoading}
                     />
                     <Button
@@ -386,13 +386,13 @@ export default function SupportPage() {
                     </Button>
                   </form>
                 ) : (
-                  <div className="p-3 bg-slate-950 border border-slate-800 rounded-xl text-center text-xs text-slate-500">
+                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500 font-medium">
                     This support ticket has been resolved and closed.
                   </div>
                 )}
               </>
             ) : (
-              <div className="py-12 text-center text-slate-500 text-xs">
+              <div className="py-12 text-center text-slate-400 text-xs">
                 Select a ticket thread or raise a new ticket to get help.
               </div>
             )}
@@ -402,9 +402,9 @@ export default function SupportPage() {
 
       {/* TAB CONTENT: RAISE NEW TICKET FORM */}
       {activeTab === 'NewTicket' && (
-        <div className="max-w-2xl bg-slate-900/50 border border-slate-800 p-6 sm:p-8 rounded-2xl space-y-6">
-          <h2 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-            <PlusCircle className="h-5 w-5 text-blue-500" />
+        <div className="max-w-2xl bg-white border border-slate-200/80 p-6 sm:p-8 rounded-2xl space-y-6 shadow-xs">
+          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-3">
+            <PlusCircle className="h-5 w-5 text-indigo-600" />
             Raise Support Ticket
           </h2>
 
