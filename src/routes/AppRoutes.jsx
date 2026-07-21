@@ -9,6 +9,8 @@ import ForgotPasswordPage from '../features/auth/pages/ForgotPasswordPage';
 import EMICalculatorPage from '../features/emi-calculator/pages/EMICalculatorPage';
 import OAuth2CallbackPage from '../features/auth/pages/OAuth2CallbackPage';
 
+import ErrorBoundary from '../components/common/ErrorBoundary';
+
 import ProtectedRoute from './ProtectedRoute';
 import DashboardLayout from '../layouts/DashboardLayout';
 
@@ -62,6 +64,7 @@ const router = createBrowserRouter([
   {
     // Public routes nested inside PublicLayout (sharing same Header and Footer)
     element: <PublicLayout />,
+    errorElement: <ErrorBoundary />,
     children: [
       {
         path: PATHS.HOME,
@@ -92,6 +95,7 @@ const router = createBrowserRouter([
   {
     // PROTECTED WORKSPACE PATHS (Wrapped in ProtectedRoute gates)
     element: <ProtectedRoute />,
+    errorElement: <ErrorBoundary />,
     children: [
       {
         // Workspace pages share the same Sidebar + Header Layout

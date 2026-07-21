@@ -5,6 +5,8 @@ import { PATHS, STATUS_CONFIG } from '../../../utils/constants';
 import { formatCurrency } from '../../../utils/formatters';
 import { api } from '../../../api/apiClient';
 import Button from '../../../components/common/Button';
+import PageSkeletonLoader from '../../../components/common/PageSkeletonLoader';
+
 
 /**
  * ============================================================
