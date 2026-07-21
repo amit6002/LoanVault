@@ -238,7 +238,7 @@ export default function OfficerDashboard() {
       {/* 4. POP-UP MODAL WINDOW FOR OFFICER SUPPORT CHAT */}
       {selectedTicketId && currentTicket && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200/80 w-full max-w-2xl rounded-3xl p-6 shadow-2xl space-y-4 animate-modal-scale relative text-slate-900 max-h-[90vh] flex flex-col">
+          <div className="bg-white border border-slate-200/80 w-full max-w-2xl rounded-3xl p-6 shadow-2xl space-y-4 animate-modal-scale relative text-slate-900 max-h-[90vh] flex flex-col no-scrollbar">
             
             {/* Modal Header */}
             <div className="flex justify-between items-start border-b border-slate-200 pb-4">
@@ -274,7 +274,7 @@ export default function OfficerDashboard() {
             </div>
 
             {/* Conversation Messages Thread */}
-            <div className="flex-1 overflow-y-auto space-y-3 p-4 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs max-h-[50vh]">
+            <div className="flex-1 overflow-y-auto no-scrollbar space-y-3 p-4 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs max-h-[50vh]">
               {currentTicket.messages && currentTicket.messages.length > 0 ? (
                 currentTicket.messages.map((m) => (
                   <div

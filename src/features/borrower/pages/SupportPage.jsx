@@ -198,11 +198,11 @@ export default function SupportPage() {
       <div className="p-4 bg-white border border-slate-200/80 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs shadow-xs">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">
-            RM
+            PV
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-900 text-sm">Vikram Sethi</span>
+              <span className="font-bold text-slate-900 text-sm">Pooja Verma (Loan Officer)</span>
               <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
                 Online Officer
               </span>
@@ -360,8 +360,8 @@ export default function SupportPage() {
       {/* 2. POP-UP MODAL OVERLAY FOR SELECTED SUPPORT QUERY THREAD    */}
       {/* ============================================================ */}
       {currentTicket && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto no-scrollbar animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl border border-slate-200 relative animate-in zoom-in-95 duration-200 no-scrollbar">
             {/* Top Close Button (X) */}
             <button
               onClick={handleCloseModal}
@@ -410,7 +410,7 @@ export default function SupportPage() {
             )}
 
             {/* Messages Thread Container */}
-            <div className="space-y-4 max-h-[350px] overflow-y-auto p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
+            <div className="space-y-4 max-h-[350px] overflow-y-auto no-scrollbar p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
               {/* Original Description */}
               <div className="flex flex-col items-start space-y-1 max-w-[88%]">
                 <span className="text-[10px] text-slate-400 font-bold uppercase">You (Original Description)</span>
