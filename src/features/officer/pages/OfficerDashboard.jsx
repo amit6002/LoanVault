@@ -60,7 +60,7 @@ export default function OfficerDashboard() {
       senderName: officerName,
     });
 
-    const refreshed = await ticketStore.getTickets(true);
+    const refreshed = ticketStore.getLocalTickets();
     setTickets(refreshed);
     setOfficerReply('');
     setIsLoading(false);

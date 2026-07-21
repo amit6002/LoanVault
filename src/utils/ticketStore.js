@@ -56,12 +56,7 @@ export const ticketStore = {
       console.warn('Backend tickets fetch fallback to local storage:', err);
     }
 
-    const localData = localStorage.getItem(TICKET_STORAGE_KEY);
-    if (!localData) {
-      localStorage.setItem(TICKET_STORAGE_KEY, JSON.stringify(INITIAL_TICKETS));
-      return INITIAL_TICKETS;
-    }
-    return JSON.parse(localData);
+    return ticketStore.getLocalTickets();
   },
 
   createTicket: async ({ category, subject, description, borrowerName = 'Rahul Sharma' }) => {
@@ -106,17 +101,18 @@ export const ticketStore = {
 
   addMessage: async (ticketId, { text, senderRole = 'BORROWER', senderName = 'Rahul Sharma' }) => {
     try {
-      const res = await api.post(`/api/support/tickets/${ticketId}/messages`, { text }).catch(() => null);
-      if (res && res.data) {
-        return res.data;
-      }
+      await api.post(`/api/support/tickets/${ticketId}/messages`, { text }).catch(() => null);
     } catch (err) {
       console.warn('Add message backend error, fallback local:', err);
     }
 
     const tickets = ticketStore.getLocalTickets();
     const updated = tickets.map(t => {
-      if (t.id === ticketId || t.ticketId === ticketId) {
+      const isMatch = t.id === ticketId || 
+                      t.ticketId === ticketId || 
+                      String(t.id) === String(ticketId) || 
+                      String(t.ticketId) === String(ticketId);
+      if (isMatch) {
         const isOfficer = senderRole === 'OFFICER';
         let newStatus = t.status;
 
@@ -131,7 +127,7 @@ export const ticketStore = {
           status: newStatus,
           unreadMessagesCount: isOfficer ? (t.unreadMessagesCount || 0) + 1 : t.unreadMessagesCount,
           messages: [
-            ...t.messages,
+            ...(t.messages || []),
             {
               id: Date.now(),
               senderRole,
@@ -147,28 +143,29 @@ export const ticketStore = {
     });
 
     localStorage.setItem(TICKET_STORAGE_KEY, JSON.stringify(updated));
-    return updated.find(t => t.id === ticketId || t.ticketId === ticketId);
+    return updated;
   },
 
   updateStatus: async (ticketId, status) => {
     try {
-      const res = await api.put(`/api/support/tickets/${ticketId}/status?status=${status}`).catch(() => null);
-      if (res && res.data) {
-        return res.data;
-      }
+      await api.put(`/api/support/tickets/${ticketId}/status?status=${status}`).catch(() => null);
     } catch (err) {
       console.warn('Update status backend error, fallback local:', err);
     }
 
     const tickets = ticketStore.getLocalTickets();
     const updated = tickets.map(t => {
-      if (t.id === ticketId || t.ticketId === ticketId) {
+      const isMatch = t.id === ticketId || 
+                      t.ticketId === ticketId || 
+                      String(t.id) === String(ticketId) || 
+                      String(t.ticketId) === String(ticketId);
+      if (isMatch) {
         return { ...t, status };
       }
       return t;
     });
     localStorage.setItem(TICKET_STORAGE_KEY, JSON.stringify(updated));
-    return updated.find(t => t.id === ticketId || t.ticketId === ticketId);
+    return updated;
   },
 
   markAsRead: async (ticketId) => {
@@ -180,8 +177,12 @@ export const ticketStore = {
 
     const tickets = ticketStore.getLocalTickets();
     const updated = tickets.map(t => {
-      if (t.id === ticketId || t.ticketId === ticketId) {
-        const readMsgs = t.messages.map(m => m.senderRole === 'OFFICER' ? { ...m, isRead: true } : m);
+      const isMatch = t.id === ticketId || 
+                      t.ticketId === ticketId || 
+                      String(t.id) === String(ticketId) || 
+                      String(t.ticketId) === String(ticketId);
+      if (isMatch) {
+        const readMsgs = (t.messages || []).map(m => m.senderRole === 'OFFICER' ? { ...m, isRead: true } : m);
         return { ...t, messages: readMsgs, unreadMessagesCount: 0 };
       }
       return t;
@@ -193,11 +194,13 @@ export const ticketStore = {
     const tickets = ticketStore.getLocalTickets();
     let totalUnread = 0;
     tickets.forEach(t => {
-      t.messages.forEach(m => {
-        if (m.senderRole === 'OFFICER' && !m.isRead) {
-          totalUnread++;
-        }
-      });
+      if (t.messages && Array.isArray(t.messages)) {
+        t.messages.forEach(m => {
+          if (m.senderRole === 'OFFICER' && !m.isRead) {
+            totalUnread++;
+          }
+        });
+      }
     });
     return totalUnread;
   },
@@ -208,6 +211,10 @@ export const ticketStore = {
       localStorage.setItem(TICKET_STORAGE_KEY, JSON.stringify(INITIAL_TICKETS));
       return INITIAL_TICKETS;
     }
-    return JSON.parse(data);
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      return INITIAL_TICKETS;
+    }
   }
 };
