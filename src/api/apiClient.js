@@ -3,13 +3,19 @@
  * API CLIENT SERVICE
  * Centralized fetch wrapper that communicates with our Spring Boot REST API.
  * Automatically attaches JWT Authorization headers to protected requests.
+ * Includes local dev fallback & clean error handling.
  * ============================================================
  */
 
 const rawEnv = (import.meta.env.VITE_API_URL || '').trim();
-const API_BASE_URL = (rawEnv && rawEnv.startsWith('http'))
+const PRIMARY_BASE_URL = (rawEnv && rawEnv.startsWith('http'))
   ? rawEnv.replace(/\/+$/, '')
   : 'https://loanvault-production.up.railway.app';
+
+const isLocalHost = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+const LOCAL_FALLBACK_URL = 'http://localhost:8080';
 
 /**
  * Core fetch helper function
@@ -17,7 +23,7 @@ const API_BASE_URL = (rawEnv && rawEnv.startsWith('http'))
 async function request(endpoint, options = {}) {
   const token = localStorage.getItem('lms_token');
   const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const targetUrl = `${API_BASE_URL}${path}`;
+  let targetUrl = `${PRIMARY_BASE_URL}${path}`;
 
   const headers = {
     'Content-Type': 'application/json',
@@ -31,8 +37,23 @@ async function request(endpoint, options = {}) {
   };
 
   try {
-    const response = await fetch(targetUrl, config);
-    
+    let response;
+    try {
+      response = await fetch(targetUrl, config);
+    } catch (networkErr) {
+      // If primary fetch failed on localhost, attempt fallback to local Spring Boot backend
+      if (isLocalHost && PRIMARY_BASE_URL !== LOCAL_FALLBACK_URL) {
+        try {
+          targetUrl = `${LOCAL_FALLBACK_URL}${path}`;
+          response = await fetch(targetUrl, config);
+        } catch (localErr) {
+          throw networkErr;
+        }
+      } else {
+        throw networkErr;
+      }
+    }
+
     // Handle 401 Unauthorized globally (token expired / invalid)
     if (response.status === 401 && !endpoint.includes('/api/auth/')) {
       localStorage.removeItem('lms_token');
@@ -72,12 +93,15 @@ async function request(endpoint, options = {}) {
         throw new Error(rawText.trim());
       }
       const statusText = response.statusText ? ` ${response.statusText}` : '';
-      throw new Error(`Server error (${response.status})${statusText} on ${targetUrl}`);
+      throw new Error(`Server error (${response.status})${statusText}`);
     }
 
     return data !== null ? data : rawText;
   } catch (error) {
     console.error(`API Error [${endpoint}]:`, error);
+    if (error.name === 'TypeError' || (error.message && error.message.includes('Failed to fetch'))) {
+      throw new Error('Unable to connect to LoanVault backend. The server may be restarting or offline.');
+    }
     throw error;
   }
 }
@@ -90,5 +114,5 @@ export const api = {
   delete: (endpoint, headers = {}) => request(endpoint, { method: 'DELETE', headers }),
   
   // OAuth2 Google Redirect URL
-  googleAuthUrl: `${API_BASE_URL}/oauth2/authorization/google`,
+  googleAuthUrl: `${PRIMARY_BASE_URL}/oauth2/authorization/google`,
 };
