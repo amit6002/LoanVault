@@ -66,7 +66,6 @@ export default function DashboardLayout() {
     [ROLES.OFFICER]: [
       { label: 'Overview', path: PATHS.OFFICER_DASHBOARD, icon: LayoutDashboard },
       { label: 'Application Queue', path: PATHS.OFFICER_QUEUE, icon: FileText },
-      { label: 'Performance Tracker', path: PATHS.OFFICER_PERFORMANCE, icon: UserCheck },
     ],
     [ROLES.MANAGER]: [
       { label: 'Dashboard', path: PATHS.MANAGER_DASHBOARD, icon: LayoutDashboard },

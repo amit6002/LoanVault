@@ -72,7 +72,13 @@ export default function OfficerDashboard() {
   };
 
   const currentTicket = selectedTicketId
-    ? tickets.find((t) => (t.id || t.ticketId) === selectedTicketId)
+    ? tickets.find(
+        (t) =>
+          t.ticketId === selectedTicketId ||
+          t.id === selectedTicketId ||
+          String(t.id) === String(selectedTicketId) ||
+          String(t.ticketId) === String(selectedTicketId)
+      )
     : null;
 
   const reopenedTicketsCount = tickets.filter((t) => t.status === 'REOPENED').length;
@@ -184,7 +190,7 @@ export default function OfficerDashboard() {
             return (
               <div
                 key={ticketIdStr}
-                onClick={() => setSelectedTicketId(ticketIdStr)}
+                onClick={() => setSelectedTicketId(t.ticketId || t.id)}
                 className={`p-5 rounded-2xl border cursor-pointer transition-all duration-300 shadow-card hover:-translate-y-1 hover:shadow-xl space-y-3 ${
                   isReopened
                     ? 'bg-amber-50/60 border-amber-200 hover:border-amber-300'
