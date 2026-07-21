@@ -48,10 +48,6 @@ export default function SupportPage() {
     setIsLoading(true);
     const data = await ticketStore.getTickets(false);
     setTickets(data);
-    if (data.length > 0 && !selectedTicketId) {
-      setSelectedTicketId(data[0].id || data[0].ticketId);
-      ticketStore.markAsRead(data[0].id || data[0].ticketId);
-    }
     setIsLoading(false);
   };
 
@@ -128,8 +124,9 @@ export default function SupportPage() {
     setIsLoading(false);
   };
 
-  const currentTicket =
-    tickets.find((t) => (t.id || t.ticketId) === selectedTicketId) || tickets[0];
+  const currentTicket = selectedTicketId
+    ? tickets.find((t) => (t.id || t.ticketId) === selectedTicketId)
+    : null;
   const isOfficerReplied =
     currentTicket && (currentTicket.status === 'OFFICER_REPLIED' || currentTicket.status === 'IN_PROGRESS');
 
@@ -392,8 +389,14 @@ export default function SupportPage() {
                 )}
               </>
             ) : (
-              <div className="py-12 text-center text-slate-400 text-xs">
-                Select a ticket thread or raise a new ticket to get help.
+              <div className="py-24 text-center flex flex-col items-center justify-center space-y-3">
+                <div className="p-4 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-2xl">
+                  <MessageSquare className="h-8 w-8" />
+                </div>
+                <h4 className="text-base font-bold text-slate-900">No Query Selected</h4>
+                <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+                  Click on any support thread from the list on the left to open and view the conversation thread.
+                </p>
               </div>
             )}
           </div>

@@ -46,9 +46,6 @@ export default function OfficerDashboard() {
   const loadOfficerTickets = async () => {
     const data = await ticketStore.getTickets(true);
     setTickets(data);
-    if (data.length > 0 && !selectedTicketId) {
-      setSelectedTicketId(data[0].id || data[0].ticketId);
-    }
   };
 
   const handleSendOfficerReply = async (e) => {
@@ -68,7 +65,9 @@ export default function OfficerDashboard() {
     setIsLoading(false);
   };
 
-  const currentTicket = tickets.find((t) => (t.id || t.ticketId) === selectedTicketId) || tickets[0];
+  const currentTicket = selectedTicketId
+    ? tickets.find((t) => (t.id || t.ticketId) === selectedTicketId)
+    : null;
   const reopenedTicketsCount = tickets.filter((t) => t.status === 'REOPENED').length;
 
   return (
