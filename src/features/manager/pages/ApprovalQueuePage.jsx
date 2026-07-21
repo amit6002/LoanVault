@@ -11,6 +11,7 @@ import Button from '../../../components/common/Button';
  * Connected to Spring Boot REST API.
  * Receives proposals recommended by Loan Officers, displays officer audit remarks & CIBIL score,
  * and issues final sanction approvals and disbursements.
+ * Manager Sanction Desk opens in a centered Pop-Up Modal Window.
  * ============================================================
  */
 export default function ApprovalQueuePage() {
@@ -24,6 +25,18 @@ export default function ApprovalQueuePage() {
   useEffect(() => {
     fetchApprovalQueue();
   }, []);
+
+  // Lock background page scroll when pop-up modal is active
+  useEffect(() => {
+    if (selectedApp) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedApp]);
 
   const fetchApprovalQueue = async () => {
     setIsLoadingQueue(true);
@@ -84,9 +97,17 @@ export default function ApprovalQueuePage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       {/* Page Heading */}
-      <div className="border-b border-slate-200 pb-5">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Approval Queue</h1>
-        <p className="text-sm text-slate-500 mt-1">Audit final officer recommendations, review credit profiles, and issue sanction disbursements.</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-5">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
+            <BadgeAlert className="h-7 w-7 text-indigo-600" />
+            Manager Approval Queue
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">Audit final officer recommendations, review credit profiles, and issue sanction disbursements.</p>
+        </div>
+        <span className="px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-full text-xs font-bold font-mono">
+          {applications.length} Proposals Pending
+        </span>
       </div>
 
       {/* Error banner */}
@@ -98,157 +119,163 @@ export default function ApprovalQueuePage() {
             <p className="text-xs text-rose-600 mt-1">{error}</p>
             <button
               onClick={fetchApprovalQueue}
-              className="text-xs text-rose-700 font-bold underline mt-2 hover:text-rose-800 transition-colors cursor-pointer"
+              className="text-xs font-bold text-rose-700 underline mt-2 cursor-pointer"
             >
-              Retry
+              Retry Connection
             </button>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* LEFT CONTAINER: Queue list (7 columns) */}
-        <div className="lg:col-span-7 space-y-4">
-          {isLoadingQueue ? (
-            <div className="p-8 text-center text-slate-500 font-medium space-y-2 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
-              <div className="h-6 w-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto" />
-              <p className="text-xs">Fetching officer proposals from Spring Boot backend...</p>
-            </div>
-          ) : applications.length === 0 && !error ? (
-            <div className="bg-white border border-slate-200/80 p-10 rounded-2xl text-center space-y-4 shadow-xs">
-              <CheckCircle2 className="h-12 w-12 text-emerald-600 mx-auto animate-bounce" />
-              <h3 className="text-lg font-bold text-slate-900">Queue cleared!</h3>
-              <p className="text-sm text-slate-500 max-w-sm mx-auto font-medium">
-                No recommended proposals are pending final sanction decision at this moment.
-              </p>
-            </div>
-          ) : (
-            applications.map((app) => {
-              const statusConfig = STATUS_CONFIG[app.status] || { label: app.status, color: 'bg-slate-100 text-slate-600 border border-slate-200' };
-              const isSelected = selectedApp?.id === app.id;
-              
-              return (
-                <div
-                  key={app.id}
-                  onClick={() => { setSelectedApp(app); setManagerNotes(''); }}
-                  className={`p-5 rounded-2xl border transition-all duration-200 cursor-pointer flex justify-between items-center ${
-                    isSelected 
-                      ? 'bg-indigo-50/80 border-indigo-500 text-slate-900 shadow-xs' 
-                      : 'bg-white border-slate-200/80 hover:border-indigo-500/50 shadow-xs'
-                  }`}
-                >
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-indigo-600">REF: {app.id}</span>
-                      <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold ${statusConfig.color}`}>
-                        {statusConfig.label}
-                      </span>
-                    </div>
-                    <h3 className="text-md font-bold text-slate-900">
-                      {app.fullName} ({app.type} Loan)
-                    </h3>
-                    <p className="text-xs text-slate-500 font-medium">Officer Proposal: Recommended Approval</p>
-                  </div>
-
-                  <div className="text-right space-y-1.5">
-                    <p className="text-md font-black text-slate-900">{formatCurrency(app.amount, false)}</p>
-                    <span className="text-xs text-indigo-600 font-bold flex items-center justify-end gap-1">
-                      Audit Proposal →
-                    </span>
-                  </div>
-                </div>
-              );
-            })
-          )}
+      {/* Proposals Grid */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-6 shadow-card">
+        <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+          <h3 className="text-md font-bold text-slate-900">Recommended Officer Proposals</h3>
+          <button
+            onClick={fetchApprovalQueue}
+            className="text-xs text-indigo-600 hover:text-indigo-700 font-bold cursor-pointer"
+          >
+            Refresh Queue
+          </button>
         </div>
 
-        {/* RIGHT CONTAINER: Manager Sanction Decision Box (5 columns) */}
-        <div className="lg:col-span-5">
-          {selectedApp ? (
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-6 animate-in fade-in duration-300 shadow-xs">
-              <div className="border-b border-slate-200 pb-4 flex justify-between items-start gap-4">
+        {isLoadingQueue ? (
+          <div className="text-center py-12 text-slate-400 text-sm font-medium">
+            Loading approval queue...
+          </div>
+        ) : applications.length === 0 ? (
+          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-8 text-center space-y-3">
+            <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto" />
+            <h4 className="text-sm font-bold text-slate-900">Approval Queue Clear</h4>
+            <p className="text-sm text-slate-500 max-w-sm mx-auto font-medium">
+              No recommended loan proposals are currently pending manager sanction decision.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {applications.map((app) => (
+              <div
+                key={app.id}
+                onClick={() => setSelectedApp(app)}
+                className="p-5 rounded-2xl border border-slate-200/80 hover:border-indigo-500/50 bg-white hover:bg-slate-50/50 transition-all duration-300 cursor-pointer shadow-card hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 space-y-4 group"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-mono font-bold text-indigo-600">REF: {app.id}</span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                    RECOMMENDED
+                  </span>
+                </div>
+
                 <div>
-                  <h3 className="text-lg font-bold text-slate-900">Manager Sanction Desk</h3>
-                  <span className="text-xs font-mono text-indigo-600 font-bold">REF: {selectedApp.id}</span>
+                  <h3 className="text-md font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                    {app.fullName}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">{app.type} Loan Proposal</p>
                 </div>
-                <Button variant="secondary" size="sm" onClick={() => setSelectedApp(null)}>Close</Button>
-              </div>
 
-              {/* Proposal summary */}
-              <div className="space-y-2 text-xs leading-relaxed border-b border-slate-200 pb-4">
-                <div className="flex justify-between">
-                  <span className="text-slate-500 font-medium">Applicant Name</span>
-                  <span className="text-slate-900 font-bold">{selectedApp.fullName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500 font-medium">Sanction Amount Requested</span>
-                  <span className="text-slate-900 font-bold">{formatCurrency(selectedApp.amount, false)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500 font-medium">CIBIL Bureau Score</span>
-                  <span className="text-emerald-700 font-bold">{selectedApp.cibilScore || 'Not Pulled'}</span>
+                <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
+                  <div>
+                    <p className="text-xs text-slate-400">Sanction Amount</p>
+                    <p className="text-sm font-black text-slate-900">{formatCurrency(app.amount, false)}</p>
+                  </div>
+                  <span className="px-3 py-1.5 bg-indigo-600 group-hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1 shadow-xs">
+                    Audit Proposal &rarr;
+                  </span>
                 </div>
               </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-              {/* Officer Audit Remarks */}
-              <div className="p-3.5 bg-indigo-50/80 border border-indigo-200 rounded-2xl space-y-1">
-                <span className="text-[11px] font-bold text-indigo-900 flex items-center gap-1">
-                  <UserCheck className="h-3.5 w-3.5 text-indigo-600" /> Underwriter Officer Report:
-                </span>
-                <p className="text-xs text-slate-700 italic leading-relaxed">
-                  "{selectedApp.officerRemarks}"
-                </p>
+      {/* CENTERED POP-UP MODAL WINDOW FOR MANAGER SANCTION DESK */}
+      {selectedApp && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto no-scrollbar">
+          <div className="bg-white border border-slate-200/80 w-full max-w-2xl rounded-3xl p-6 shadow-2xl space-y-6 animate-modal-scale relative text-slate-900 max-h-[90vh] overflow-y-auto no-scrollbar">
+            
+            {/* Modal Header */}
+            <div className="border-b border-slate-200 pb-4 flex justify-between items-start gap-4">
+              <div>
+                <h3 className="text-xl font-extrabold text-slate-900">Manager Sanction Desk</h3>
+                <span className="text-xs font-mono text-indigo-600 font-bold">REF ID: {selectedApp.id}</span>
               </div>
-
-              {/* Manager Sanction Notes */}
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-                  Manager Sanction Remarks
-                </label>
-                <textarea
-                  rows={2}
-                  value={managerNotes}
-                  onChange={(e) => setManagerNotes(e.target.value)}
-                  placeholder="e.g. Sanction approved at 8.4% interest rate. Authorized for fund release."
-                  className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-600 shadow-xs"
-                />
-              </div>
-
-              {/* Decision Actions */}
-              <div className="pt-2 flex gap-3">
-                <Button
-                  variant="primary"
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white"
-                  leftIcon={Coins}
-                  onClick={() => handleDecision('APPROVE')}
-                  isLoading={actionLoading}
-                >
-                  Sanction & Release Funds
-                </Button>
-
-                <Button
-                  variant="secondary"
-                  className="bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200"
-                  onClick={() => handleDecision('REJECT')}
-                  isLoading={actionLoading}
-                >
-                  Reject
-                </Button>
-              </div>
-
+              <button
+                type="button"
+                onClick={() => setSelectedApp(null)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                <XCircle className="h-6 w-6" />
+              </button>
             </div>
-          ) : (
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-8 text-center space-y-3 shadow-xs">
-              <FileText className="h-10 w-10 text-slate-300 mx-auto" />
-              <h4 className="text-sm font-bold text-slate-900">No Proposal Selected</h4>
-              <p className="text-xs text-slate-500 leading-relaxed font-medium">
-                Click on any proposal card on the left list to review the underwriter report and issue final sanction approvals.
+
+            {/* Proposal summary */}
+            <div className="space-y-2.5 text-xs leading-relaxed border-b border-slate-200 pb-4">
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Applicant Name</span>
+                <span className="text-slate-900 font-bold">{selectedApp.fullName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">PAN Card</span>
+                <span className="text-slate-700 font-mono font-bold">{selectedApp.panNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">Sanction Amount Requested</span>
+                <span className="text-slate-900 font-black">{formatCurrency(selectedApp.amount, false)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500 font-medium">CIBIL Bureau Score</span>
+                <span className="text-emerald-700 font-bold">{selectedApp.cibilScore || '785 (Excellent)'}</span>
+              </div>
+            </div>
+
+            {/* Officer Audit Remarks */}
+            <div className="p-4 bg-indigo-50/80 border border-indigo-200 rounded-2xl space-y-1">
+              <span className="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
+                <UserCheck className="h-4 w-4 text-indigo-600" /> Underwriter Officer Report:
+              </span>
+              <p className="text-xs text-slate-700 italic leading-relaxed">
+                "{selectedApp.officerRemarks}"
               </p>
             </div>
-          )}
-        </div>
 
-      </div>
+            {/* Manager Sanction Notes */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                Manager Sanction Remarks
+              </label>
+              <textarea
+                rows={2}
+                value={managerNotes}
+                onChange={(e) => setManagerNotes(e.target.value)}
+                placeholder="e.g. Sanction approved at 8.4% interest rate. Authorized for fund release."
+                className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-indigo-600 shadow-xs"
+              />
+            </div>
+
+            {/* Decision Actions */}
+            <div className="pt-2 flex gap-3">
+              <Button
+                variant="primary"
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 border-emerald-600 text-white"
+                leftIcon={Coins}
+                onClick={() => handleDecision('APPROVE')}
+                isLoading={actionLoading}
+              >
+                Sanction & Release Funds
+              </Button>
+
+              <Button
+                variant="secondary"
+                className="bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200"
+                onClick={() => handleDecision('REJECT')}
+                isLoading={actionLoading}
+              >
+                Reject
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

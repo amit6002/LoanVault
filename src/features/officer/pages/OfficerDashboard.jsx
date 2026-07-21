@@ -32,6 +32,18 @@ export default function OfficerDashboard() {
     loadOfficerTickets();
   }, []);
 
+  // Lock background page scroll when pop-up modal is active
+  useEffect(() => {
+    if (selectedTicketId) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedTicketId]);
+
   const fetchPendingQueueCount = async () => {
     setIsLoading(true);
     try {

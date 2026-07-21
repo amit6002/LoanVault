@@ -35,6 +35,18 @@ export default function ApplicationQueuePage() {
     fetchQueue();
   }, []);
 
+  // Lock background page scroll when pop-up modal is active
+  useEffect(() => {
+    if (selectedApp) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedApp]);
+
   const fetchQueue = async () => {
     setIsLoadingQueue(true);
     setError(null);
@@ -197,8 +209,8 @@ export default function ApplicationQueuePage() {
 
       {/* 3. CENTERED POP-UP MODAL WINDOW FOR AUDIT WORKSPACE */}
       {selectedApp && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200/80 w-full max-w-2xl rounded-3xl p-6 shadow-2xl space-y-6 animate-modal-scale relative text-slate-900 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto no-scrollbar">
+          <div className="bg-white border border-slate-200/80 w-full max-w-2xl rounded-3xl p-6 shadow-2xl space-y-6 animate-modal-scale relative text-slate-900 max-h-[90vh] overflow-y-auto no-scrollbar">
             
             {/* Modal Header */}
             <div className="border-b border-slate-200 pb-4 flex justify-between items-start gap-4">

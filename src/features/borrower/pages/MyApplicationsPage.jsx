@@ -46,6 +46,18 @@ export default function MyApplicationsPage() {
   const [modalTab, setModalTab] = useState('Timeline');
   const [isLoading, setIsLoading] = useState(true);
 
+  // Lock background page scroll when pop-up modal is open
+  useEffect(() => {
+    if (selectedApp) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedApp]);
+
   const [applications, setApplications] = useState([
     {
       id: 'APP-9021',
@@ -306,8 +318,8 @@ export default function MyApplicationsPage() {
 
       {/* DETAILS & TIMELINE POP-UP MODAL WINDOW */}
       {selectedApp && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl space-y-6 p-6 sm:p-8 relative text-slate-900 animate-modal-scale">
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto no-scrollbar animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-2xl overflow-hidden no-scrollbar shadow-2xl space-y-6 p-6 sm:p-8 relative text-slate-900 animate-modal-scale">
             {/* Modal Header */}
             <div className="flex justify-between items-start border-b border-slate-200 pb-4">
               <div>
