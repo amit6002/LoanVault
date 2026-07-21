@@ -62,6 +62,7 @@ export default function DashboardLayout() {
       { label: 'My Loans', path: PATHS.BORROWER_LOANS, icon: Landmark },
       { label: 'Applications', path: PATHS.BORROWER_APPLICATIONS, icon: FileText },
       { label: 'EMI & Payments', path: PATHS.BORROWER_EMI_CALENDAR, icon: CreditCard },
+      { label: 'Help Center', path: PATHS.BORROWER_SUPPORT, icon: LifeBuoy },
       { label: 'Profile & Settings', path: PATHS.BORROWER_PROFILE, icon: User },
     ],
     [ROLES.OFFICER]: [
@@ -115,45 +116,31 @@ export default function DashboardLayout() {
             {activeMenuLinks.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
+              const isHelpCenter = item.path === PATHS.BORROWER_SUPPORT;
               return (
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all group ${
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold transition-all group ${
                     isActive 
                       ? 'bg-blue-600 text-white shadow-lg' 
                       : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                   }`}
                 >
-                  <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-blue-400 transition-colors'}`} />
-                  <span className="truncate">{item.label}</span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Icon className={`h-5 w-5 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-blue-400 transition-colors'}`} />
+                    <span className="truncate">{item.label}</span>
+                  </div>
+                  {isHelpCenter && unreadCount > 0 && (
+                    <span className="px-2 py-0.5 rounded-full bg-red-500 text-white font-bold text-[10px] shadow-sm flex-shrink-0 animate-pulse">
+                      {unreadCount} New
+                    </span>
+                  )}
                 </Link>
               );
             })}
           </nav>
         </div>
-
-        {/* Need Help Widget Box */}
-        {userRole === ROLES.BORROWER && (
-          <div className="mx-3 mb-6 p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-2 relative">
-            {unreadCount > 0 && (
-              <span className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full bg-red-500 text-white font-bold text-[10px] shadow-lg animate-pulse">
-                {unreadCount} New
-              </span>
-            )}
-            <div className="flex items-center gap-2 text-blue-400">
-              <LifeBuoy className="h-5 w-5" />
-              <span className="text-xs font-bold text-white">Need Help?</span>
-            </div>
-            <p className="text-[11px] text-slate-400">We're here to assist you with your loan.</p>
-            <button
-              onClick={() => setIsHelpCenterOpen(true)}
-              className="w-full mt-1 py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all text-center flex items-center justify-center gap-2"
-            >
-              <span>Visit Help Center →</span>
-            </button>
-          </div>
-        )}
       </aside>
 
       {/* 2. MAIN WORKSPACE CONTENT AREA */}
