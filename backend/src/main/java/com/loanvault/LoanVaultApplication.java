@@ -30,6 +30,9 @@ public class LoanVaultApplication {
             if (!formattedUrl.contains("sslmode=")) {
                 formattedUrl += (formattedUrl.contains("?") ? "&" : "?") + "sslmode=require";
             }
+            if (!formattedUrl.contains("prepareThreshold=")) {
+                formattedUrl += (formattedUrl.contains("?") ? "&" : "?") + "prepareThreshold=0";
+            }
             System.setProperty("spring.datasource.url", formattedUrl);
         }
 
