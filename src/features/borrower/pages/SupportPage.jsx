@@ -17,6 +17,9 @@ import { ticketStore } from '../../../utils/ticketStore';
  * ============================================================
  */
 export default function SupportPage() {
+  const session = JSON.parse(localStorage.getItem('lms_session') || '{}');
+  const borrowerName = session.name || 'Rahul Sharma';
+
   const [activeTab, setActiveTab] = useState('Chat'); // 'Chat' or 'NewTicket'
   const [tickets, setTickets] = useState([]);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
@@ -87,10 +90,10 @@ export default function SupportPage() {
       category: categories.find((c) => c.value === ticketForm.category)?.label || ticketForm.category,
       subject: ticketForm.subject,
       description: ticketForm.description,
-      borrowerName: 'Rahul Sharma',
+      borrowerName: borrowerName,
     });
 
-    const refreshed = await ticketStore.getTickets(false);
+    const refreshed = ticketStore.getLocalTickets();
     setTickets(refreshed);
 
     if (newTicket) {
@@ -112,10 +115,10 @@ export default function SupportPage() {
     await ticketStore.addMessage(selectedTicketId, {
       text: replyText,
       senderRole: 'BORROWER',
-      senderName: 'Rahul Sharma',
+      senderName: borrowerName,
     });
 
-    const refreshed = await ticketStore.getTickets(false);
+    const refreshed = ticketStore.getLocalTickets();
     setTickets(refreshed);
     setReplyText('');
     setIsLoading(false);
@@ -124,13 +127,19 @@ export default function SupportPage() {
   const handleMarkResolved = async (tId) => {
     setIsLoading(true);
     await ticketStore.updateStatus(tId, 'RESOLVED');
-    const refreshed = await ticketStore.getTickets(false);
+    const refreshed = ticketStore.getLocalTickets();
     setTickets(refreshed);
     setIsLoading(false);
   };
 
   const currentTicket = selectedTicketId
-    ? tickets.find((t) => (t.id || t.ticketId) === selectedTicketId)
+    ? tickets.find(
+        (t) =>
+          t.id === selectedTicketId ||
+          t.ticketId === selectedTicketId ||
+          String(t.id) === String(selectedTicketId) ||
+          String(t.ticketId) === String(selectedTicketId)
+      )
     : null;
 
   const isOfficerReplied =
