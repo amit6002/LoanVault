@@ -134,11 +134,12 @@ public class SecurityConfig {
 
         // Allow Vercel origins, custom frontend URL, and local dev
         config.setAllowedOriginPatterns(List.of(
+            "http://localhost:[*]",
+            "http://127.0.0.1:[*]",
             "https://*.vercel.app",
-            "http://localhost:5173",
-            "http://localhost:3000",
-            "*",
-            frontendUrl
+            "https://*.up.railway.app",
+            "http://*",
+            "https://*"
         ));
 
         // Allow common HTTP methods

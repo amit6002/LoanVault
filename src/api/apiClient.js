@@ -3,19 +3,27 @@
  * API CLIENT SERVICE
  * Centralized fetch wrapper that communicates with our Spring Boot REST API.
  * Automatically attaches JWT Authorization headers to protected requests.
- * Includes local dev fallback & clean error handling.
+ * Intelligently routes between local Spring Boot (http://localhost:8080)
+ * and production Railway cloud backend (https://loanvault-production.up.railway.app).
  * ============================================================
  */
 
 const rawEnv = (import.meta.env.VITE_API_URL || '').trim();
-const PRIMARY_BASE_URL = (rawEnv && rawEnv.startsWith('http'))
-  ? rawEnv.replace(/\/+$/, '')
-  : 'https://loanvault-production.up.railway.app';
 
 const isLocalHost = typeof window !== 'undefined' && 
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
-const LOCAL_FALLBACK_URL = 'http://localhost:8080';
+const CLOUD_URL = 'https://loanvault-production.up.railway.app';
+const LOCAL_URL = 'http://localhost:8080';
+
+// Primary URL: If VITE_API_URL is configured, use it.
+// If running on localhost, prefer http://localhost:8080 first.
+// Otherwise, default to cloud Railway backend.
+const PRIMARY_BASE_URL = (rawEnv && rawEnv.startsWith('http'))
+  ? rawEnv.replace(/\/+$/, '')
+  : (isLocalHost ? LOCAL_URL : CLOUD_URL);
+
+const SECONDARY_BASE_URL = (PRIMARY_BASE_URL === LOCAL_URL) ? CLOUD_URL : LOCAL_URL;
 
 /**
  * Core fetch helper function
@@ -41,15 +49,11 @@ async function request(endpoint, options = {}) {
     try {
       response = await fetch(targetUrl, config);
     } catch (networkErr) {
-      // If primary fetch failed on localhost, attempt fallback to local Spring Boot backend
-      if (isLocalHost && PRIMARY_BASE_URL !== LOCAL_FALLBACK_URL) {
-        try {
-          targetUrl = `${LOCAL_FALLBACK_URL}${path}`;
-          response = await fetch(targetUrl, config);
-        } catch (localErr) {
-          throw networkErr;
-        }
-      } else {
+      // If primary fetch failed, attempt fallback to secondary URL
+      try {
+        targetUrl = `${SECONDARY_BASE_URL}${path}`;
+        response = await fetch(targetUrl, config);
+      } catch (fallbackErr) {
         throw networkErr;
       }
     }
@@ -100,7 +104,7 @@ async function request(endpoint, options = {}) {
   } catch (error) {
     console.error(`API Error [${endpoint}]:`, error);
     if (error.name === 'TypeError' || (error.message && error.message.includes('Failed to fetch'))) {
-      throw new Error('Unable to connect to LoanVault backend. The server may be restarting or offline.');
+      throw new Error('Unable to connect to LoanVault backend. Please verify your server or network status.');
     }
     throw error;
   }
