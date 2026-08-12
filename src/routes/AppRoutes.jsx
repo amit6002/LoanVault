@@ -7,7 +7,6 @@ import RegisterPage from '../features/auth/pages/RegisterPage';
 import LoginPage from '../features/auth/pages/LoginPage';
 import ForgotPasswordPage from '../features/auth/pages/ForgotPasswordPage';
 import EMICalculatorPage from '../features/emi-calculator/pages/EMICalculatorPage';
-import OAuth2CallbackPage from '../features/auth/pages/OAuth2CallbackPage';
 
 import ErrorBoundary from '../components/common/ErrorBoundary';
 
@@ -19,7 +18,6 @@ import LoanApplicationPage from '../features/borrower/pages/LoanApplicationPage'
 import MyApplicationsPage from '../features/borrower/pages/MyApplicationsPage';
 import MyLoansPage from '../features/borrower/pages/MyLoansPage';
 import EMICalendarPage from '../features/borrower/pages/EMICalendarPage';
-import SupportPage from '../features/borrower/pages/SupportPage';
 import BorrowerProfilePage from '../features/borrower/pages/BorrowerProfilePage';
 import DocumentsPage from '../features/borrower/pages/DocumentsPage';
 import StatementsPage from '../features/borrower/pages/StatementsPage';
@@ -86,10 +84,6 @@ const router = createBrowserRouter([
         path: PATHS.FORGOT_PASSWORD,
         element: <ForgotPasswordPage />,
       },
-      {
-        path: '/oauth2/callback',
-        element: <OAuth2CallbackPage />,
-      },
     ],
   },
   {
@@ -117,10 +111,6 @@ const router = createBrowserRouter([
           {
             path: PATHS.BORROWER_EMI_CALENDAR,
             element: <EMICalendarPage />,
-          },
-          {
-            path: PATHS.BORROWER_SUPPORT,
-            element: <SupportPage />,
           },
           {
             path: PATHS.BORROWER_APPLY,

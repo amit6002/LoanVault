@@ -2,14 +2,13 @@ import { useState, useEffect } from 'react';
 import { 
   Landmark, ArrowRight, ShieldCheck, Clock, CheckCircle2, AlertTriangle, 
   ChevronRight, Bell, Calendar, Activity, Coins, Plus, Download, Upload, 
-  HelpCircle, CreditCard, Shield, Wallet, FileText 
+  CreditCard, Shield, Wallet, FileText 
 } from 'lucide-react';
-import { Link, useNavigate, useOutletContext } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { PATHS } from '../../../utils/constants';
 import { formatCurrency } from '../../../utils/formatters';
 import { api } from '../../../api/apiClient';
 import { loanStore } from '../../../utils/loanStore';
-import { ticketStore } from '../../../utils/ticketStore';
 import Button from '../../../components/common/Button';
 import PageSkeletonLoader from '../../../components/common/PageSkeletonLoader';
 
@@ -21,7 +20,6 @@ import PageSkeletonLoader from '../../../components/common/PageSkeletonLoader';
  */
 export default function BorrowerDashboard() {
   const navigate = useNavigate();
-  const { openHelpCenter } = useOutletContext() || {};
   const session = JSON.parse(localStorage.getItem('lms_session') || '{}');
 
   const [userProfile, setUserProfile] = useState(null);
@@ -108,7 +106,7 @@ export default function BorrowerDashboard() {
       <div className="bg-white border border-slate-200/80 rounded-2xl p-6 space-y-4 shadow-xs">
         <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Quick Actions</h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
           <button
             onClick={() => navigate(PATHS.BORROWER_APPLY)}
             className="p-4 bg-slate-50 border border-slate-200 hover:border-indigo-500/50 hover:bg-indigo-50/30 rounded-xl flex items-center justify-between group transition-all cursor-pointer"
@@ -139,27 +137,6 @@ export default function BorrowerDashboard() {
               </div>
             </div>
             <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-emerald-600 transition-colors" />
-          </button>
-
-          <button
-            onClick={() => navigate(PATHS.BORROWER_SUPPORT)}
-            className="p-4 bg-slate-50 border border-slate-200 hover:border-teal-500/50 hover:bg-teal-50/30 rounded-xl flex items-center justify-between group transition-all relative cursor-pointer"
-          >
-            {ticketStore.getUnreadCount() > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 px-2 py-0.5 rounded-full bg-rose-500 text-white font-bold text-[9px] shadow-xs animate-pulse">
-                {ticketStore.getUnreadCount()} Unread
-              </span>
-            )}
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-teal-100 text-teal-700 rounded-xl">
-                <HelpCircle className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <p className="font-bold text-slate-900">Help Center</p>
-                <p className="text-[11px] text-slate-500">Connect with officer</p>
-              </div>
-            </div>
-            <ChevronRight className="h-4 w-4 text-slate-400 group-hover:text-teal-600 transition-colors" />
           </button>
         </div>
       </div>

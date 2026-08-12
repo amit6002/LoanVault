@@ -4,7 +4,7 @@
  * Centralized fetch wrapper that communicates with our Spring Boot REST API.
  * Automatically attaches JWT Authorization headers to protected requests.
  * Intelligently routes between local Spring Boot (http://localhost:8080)
- * and production Railway cloud backend (https://loanvault-production.up.railway.app).
+ * and production cloud backend (Render / Vercel VITE_API_URL).
  * ============================================================
  */
 
@@ -13,12 +13,13 @@ const rawEnv = (import.meta.env.VITE_API_URL || '').trim();
 const isLocalHost = typeof window !== 'undefined' && 
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
-const CLOUD_URL = 'https://loanvault-production.up.railway.app';
+// Update this with your Render backend URL once deployed (e.g. https://loanvault-backend.onrender.com)
+const CLOUD_URL = 'https://loanvault-backend.onrender.com';
 const LOCAL_URL = 'http://localhost:8080';
 
 // Primary URL: If VITE_API_URL is configured, use it.
 // If running on localhost, prefer http://localhost:8080 first.
-// Otherwise, default to cloud Railway backend.
+// Otherwise, default to cloud Render backend.
 const PRIMARY_BASE_URL = (rawEnv && rawEnv.startsWith('http'))
   ? rawEnv.replace(/\/+$/, '')
   : (isLocalHost ? LOCAL_URL : CLOUD_URL);
@@ -119,7 +120,4 @@ export const api = {
   post: (endpoint, body, headers = {}) => request(endpoint, { method: 'POST', body: JSON.stringify(body), headers }),
   put: (endpoint, body, headers = {}) => request(endpoint, { method: 'PUT', body: JSON.stringify(body), headers }),
   delete: (endpoint, headers = {}) => request(endpoint, { method: 'DELETE', headers }),
-  
-  // OAuth2 Google Redirect URL
-  googleAuthUrl: `${PRIMARY_BASE_URL}/oauth2/authorization/google`,
 };

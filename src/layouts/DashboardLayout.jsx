@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Landmark, LogOut, LayoutDashboard, FileText, 
-  LifeBuoy, UserCog, UserCheck, ShieldAlert, BadgeAlert, TrendingUp, Coins,
+  UserCog, UserCheck, ShieldAlert, BadgeAlert, TrendingUp, Coins,
   User, CreditCard
 } from 'lucide-react';
 import { PATHS, ROLES } from '../utils/constants';
-import { ticketStore } from '../utils/ticketStore';
 import Button from '../components/common/Button';
 
 /**
@@ -17,7 +15,6 @@ import Button from '../components/common/Button';
  * ============================================================
  */
 export default function DashboardLayout() {
-  const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -25,19 +22,6 @@ export default function DashboardLayout() {
   const session = JSON.parse(localStorage.getItem('lms_session') || '{}');
   const userRole = session.role || ROLES.BORROWER;
   const userName = session.name || 'User';
-
-  useEffect(() => {
-    if (userRole === ROLES.BORROWER) {
-      updateUnread();
-      const interval = setInterval(updateUnread, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [userRole]);
-
-  const updateUnread = () => {
-    const count = ticketStore.getUnreadCount();
-    setUnreadCount(count);
-  };
 
   const handleLogOut = () => {
     localStorage.removeItem('lms_session');
@@ -60,7 +44,6 @@ export default function DashboardLayout() {
       { label: 'My Loans', path: PATHS.BORROWER_LOANS, icon: Landmark },
       { label: 'Applications', path: PATHS.BORROWER_APPLICATIONS, icon: FileText },
       { label: 'EMI & Payments', path: PATHS.BORROWER_EMI_CALENDAR, icon: CreditCard },
-      { label: 'Help Center', path: PATHS.BORROWER_SUPPORT, icon: LifeBuoy },
       { label: 'Profile & Settings', path: PATHS.BORROWER_PROFILE, icon: User },
     ],
     [ROLES.OFFICER]: [
@@ -113,7 +96,6 @@ export default function DashboardLayout() {
             {activeMenuLinks.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
-              const isHelpCenter = item.path === PATHS.BORROWER_SUPPORT;
               return (
                 <Link
                   key={item.path}
@@ -128,11 +110,6 @@ export default function DashboardLayout() {
                     <Icon className={`h-4.5 w-4.5 flex-shrink-0 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600 transition-colors'}`} />
                     <span className="truncate">{item.label}</span>
                   </div>
-                  {isHelpCenter && unreadCount > 0 && (
-                    <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white font-bold text-[10px] shadow-xs flex-shrink-0 animate-pulse">
-                      {unreadCount} New
-                    </span>
-                  )}
                 </Link>
               );
             })}
