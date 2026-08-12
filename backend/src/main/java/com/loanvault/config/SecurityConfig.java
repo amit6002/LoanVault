@@ -75,6 +75,8 @@ public class SecurityConfig {
                 // Public endpoints — no token needed
                 .requestMatchers(
                     "/api/auth/**",               // login, register, OTP
+                    "/api/health",                // keep-alive uptime monitor
+                    "/health",
                     "/oauth2/**",                  // Google OAuth2 flow
                     "/login/oauth2/**",
                     "/error"
