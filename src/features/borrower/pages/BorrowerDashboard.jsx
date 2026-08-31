@@ -40,9 +40,31 @@ export default function BorrowerDashboard() {
         setUserProfile(profileRes);
       }
 
-      const storedLoans = loanStore.getLoans();
+      const backendLoans = await api.get('/api/loans/my').catch(() => null);
+      if (backendLoans && Array.isArray(backendLoans) && backendLoans.length > 0) {
+        const mapped = backendLoans.map(item => ({
+          id: item.loanAccountNumber || `LN-${item.id}`,
+          name: item.loanType ? item.loanType.charAt(0) + item.loanType.slice(1).toLowerCase().replace('_', ' ') + ' Loan' : 'Personal Loan',
+          status: item.status || 'ACTIVE',
+          sanctionedAmount: item.sanctionedAmount || 0,
+          outstandingPrincipal: item.outstandingPrincipal || 0,
+          interestRate: item.interestRate || 10.5,
+          tenureMonths: item.tenureMonths || 12,
+          paidMonths: item.emisPaid || 0,
+          emiAmount: item.emiAmount || 0,
+          nextEmiDate: item.nextEmiDate || '-',
+          dueDateLabel: item.nextEmiDate
+            ? new Date(item.nextEmiDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+            : '-',
+          paidThisMonth: false,
+        }));
+        setLoans(mapped);
+      } else {
+        const storedLoans = loanStore.getLoans();
+        setLoans(storedLoans);
+      }
+
       const storedTxns = loanStore.getTransactions();
-      setLoans(storedLoans);
       setTransactions(storedTxns);
     } catch (err) {
       console.warn('Dashboard fetch warning:', err);

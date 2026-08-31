@@ -49,8 +49,8 @@ public class DisbursementController {
     @Transactional(readOnly = true)
     public ResponseEntity<List<LoanApplication>> getPendingDisbursements() {
         return ResponseEntity.ok(
-            applicationRepository.findByStatusOrderByAppliedAtAsc(
-                LoanApplication.Status.DISBURSEMENT_PENDING
+            applicationRepository.findByStatusInOrderByAppliedAtAsc(
+                List.of(LoanApplication.Status.DISBURSEMENT_PENDING, LoanApplication.Status.APPROVED)
             )
         );
     }

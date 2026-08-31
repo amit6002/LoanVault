@@ -230,57 +230,16 @@ public class LoanApplicationController {
         LoanApplication app = applicationRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Application not found"));
 
-        app.setStatus(LoanApplication.Status.DISBURSED);
+        app.setStatus(LoanApplication.Status.DISBURSEMENT_PENDING);
         app.setManagerRemarks(payload.get("remarks"));
         app.setSanctionedAt(LocalDateTime.now());
         applicationRepository.save(app);
 
-        // Automatically create active Loan record if not already created
-        if (loanRepository.findByApplication(app).isEmpty()) {
-            BigDecimal P = app.getLoanAmount();
-            double annualRate = app.getInterestRate() != null ? app.getInterestRate().doubleValue() : 10.5;
-            double r = annualRate / 12.0 / 100.0;
-            int N = app.getTenureMonths() != null ? app.getTenureMonths() : 12;
-
-            double emiDouble = (P.doubleValue() * r * Math.pow(1 + r, N)) / (Math.pow(1 + r, N) - 1);
-            BigDecimal emiAmount = BigDecimal.valueOf(emiDouble).setScale(2, RoundingMode.HALF_UP);
-
-            String loanAccNo = "LN-" + LocalDateTime.now().getYear() + "-"
-                + String.format("%05d", new Random().nextInt(99999));
-
-            Loan loan = Loan.builder()
-                .loanAccountNumber(loanAccNo)
-                .borrower(app.getBorrower())
-                .application(app)
-                .loanType(app.getLoanType())
-                .sanctionedAmount(app.getLoanAmount())
-                .outstandingPrincipal(app.getLoanAmount())
-                .interestRate(app.getInterestRate() != null ? app.getInterestRate() : BigDecimal.valueOf(10.5))
-                .tenureMonths(app.getTenureMonths())
-                .emiAmount(emiAmount)
-                .disbursementDate(LocalDate.now())
-                .nextEmiDate(LocalDate.now().plusMonths(1))
-                .emisPaid(0)
-                .emisRemaining(N)
-                .status(Loan.LoanStatus.ACTIVE)
-                .build();
-
-            loanRepository.save(loan);
-
-            auditService.log(manager.getEmail(), "LOAN_SANCTIONED_AND_DISBURSED",
-                "LoanApplication", app.getReferenceId(), "Loan sanctioned and disbursed by manager. Created account: " + loanAccNo);
-
-            return ResponseEntity.ok(ApiResponse.success(
-                "Loan approved and disbursed successfully! Active Loan Account " + loanAccNo + " created.",
-                Map.of("loanAccountNumber", loanAccNo)
-            ));
-        }
-
-        auditService.log(manager.getEmail(), "LOAN_APPROVED",
-            "LoanApplication", app.getReferenceId(), "Loan sanctioned by manager");
+        auditService.log(manager.getEmail(), "LOAN_SANCTIONED",
+            "LoanApplication", app.getReferenceId(), "Loan sanctioned by manager. Queued for disbursement.");
 
         return ResponseEntity.ok(ApiResponse.success(
-            "Loan approved! Application marked as Disbursed."
+            "Loan sanctioned successfully! Forwarded to Disbursement Hub for fund release."
         ));
     }
 

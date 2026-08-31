@@ -261,7 +261,7 @@ export default function ApprovalQueuePage() {
                 onClick={() => handleDecision('APPROVE')}
                 isLoading={actionLoading}
               >
-                Sanction & Release Funds
+                Sanction & Forward to Disbursement Hub
               </Button>
 
               <Button
