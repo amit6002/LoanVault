@@ -9,6 +9,7 @@ import { formatCurrency } from '../../../utils/formatters';
 import { loanStore } from '../../../utils/loanStore';
 import Button from '../../../components/common/Button';
 import { api } from '../../../api/apiClient';
+import PageSkeletonLoader from '../../../components/common/PageSkeletonLoader';
 
 /**
  * ============================================================
@@ -50,7 +51,7 @@ export default function MyLoansPage() {
     try {
       // 1. Fetch live active loans from backend PostgreSQL database
       const backendLoans = await api.get('/api/loans/my').catch(() => null);
-      if (backendLoans && Array.isArray(backendLoans) && backendLoans.length > 0) {
+      if (backendLoans && Array.isArray(backendLoans)) {
         const mapped = backendLoans.map(item => ({
           id: item.loanAccountNumber || `LN-${item.id}`,
           name: item.loanType ? item.loanType.charAt(0) + item.loanType.slice(1).toLowerCase().replace('_', ' ') + ' Loan' : 'Personal Loan',

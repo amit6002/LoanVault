@@ -41,7 +41,7 @@ export default function BorrowerDashboard() {
       }
 
       const backendLoans = await api.get('/api/loans/my').catch(() => null);
-      if (backendLoans && Array.isArray(backendLoans) && backendLoans.length > 0) {
+      if (backendLoans && Array.isArray(backendLoans)) {
         const mapped = backendLoans.map(item => ({
           id: item.loanAccountNumber || `LN-${item.id}`,
           name: item.loanType ? item.loanType.charAt(0) + item.loanType.slice(1).toLowerCase().replace('_', ' ') + ' Loan' : 'Personal Loan',

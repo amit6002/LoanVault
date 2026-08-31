@@ -58,7 +58,7 @@ export default function MyApplicationsPage() {
     };
   }, [selectedApp]);
 
-  const [applications, setApplications] = useState([
+  const MOCK_DEMO_APPS = [
     {
       id: 'APP-9021',
       type: 'Business Expansion Loan',
@@ -95,7 +95,9 @@ export default function MyApplicationsPage() {
       tenure: 24,
       purpose: 'Commercial vehicle purchase',
     },
-  ]);
+  ];
+
+  const [applications, setApplications] = useState([]);
 
   useEffect(() => {
     fetchApplications();
@@ -104,9 +106,8 @@ export default function MyApplicationsPage() {
   const fetchApplications = async () => {
     setIsLoading(true);
     try {
-      // Correct endpoint: /api/applications/my (not /api/borrower/applications)
       const res = await api.get('/api/applications/my').catch(() => null);
-      if (res && Array.isArray(res) && res.length > 0) {
+      if (res && Array.isArray(res)) {
         // Map backend LoanApplication entity fields to frontend shape
         const mapped = res.map(item => ({
           id: item.referenceId || String(item.id),
@@ -127,8 +128,15 @@ export default function MyApplicationsPage() {
           purpose: item.purpose || (item.loanType ? `${item.loanType} loan purpose` : 'General purpose'),
         }));
         setApplications(mapped);
+      } else {
+        // Fallback for offline mode: show demo apps only for demo borrower profile
+        const session = JSON.parse(localStorage.getItem('lms_session') || '{}');
+        if (session.email === 'borrower@loanvault.com') {
+          setApplications(MOCK_DEMO_APPS);
+        } else {
+          setApplications([]);
+        }
       }
-      // If API returns empty array or fails — keep the hardcoded fallback demo data (no overwrite)
     } catch (err) {
       console.warn('API error:', err);
     } finally {

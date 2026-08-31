@@ -7,92 +7,46 @@
  * ============================================================
  */
 
-const STORAGE_KEY_LOANS = 'lms_borrower_loans_v2';
-const STORAGE_KEY_TXNS = 'lms_borrower_txns_v2';
-
-const DEFAULT_LOANS = [
-  {
-    id: 'LN-APP-2026-05327',
-    name: 'Business Loan',
-    status: 'ACTIVE',
-    sanctionedAmount: 800000,
-    outstandingPrincipal: 200000,
-    interestRate: 12.0,
-    tenureMonths: 24,
-    paidMonths: 12,
-    emiAmount: 9414.69,
-    principalComponent: 8534.10,
-    interestComponent: 880.59,
-    nextEmiDate: '2026-08-05',
-    dueDateLabel: '05 Aug 2026',
-    paidThisMonth: false,
-  },
-  {
-    id: 'LN-APP-2026-27758',
-    name: 'Vehicle Loan',
-    status: 'ACTIVE',
-    sanctionedAmount: 1040800,
-    outstandingPrincipal: 1040800,
-    interestRate: 9.25,
-    tenureMonths: 60,
-    paidMonths: 0,
-    emiAmount: 9249.71,
-    principalComponent: 8350.00,
-    interestComponent: 899.71,
-    nextEmiDate: '2026-08-10',
-    dueDateLabel: '10 Aug 2026',
-    paidThisMonth: false,
-  },
-  {
-    id: 'LN-APP-2026-00812',
-    name: 'Home Loan',
-    status: 'SUBMITTED',
-    sanctionedAmount: 5500000,
-    outstandingPrincipal: 0,
-    interestRate: 8.4,
-    tenureMonths: 240,
-    paidMonths: 0,
-    emiAmount: 0,
-    principalComponent: 0,
-    interestComponent: 0,
-    nextEmiDate: '-',
-    dueDateLabel: '-',
-    paidThisMonth: false,
-  }
-];
-
-const DEFAULT_TXNS = [
-  { id: 'TXN-8012', loanId: 'LN-APP-2026-05327', name: 'EMI Payment', type: 'DEBIT', amount: 9414.69, date: '05 Jul 2026', status: 'SUCCESS' },
-  { id: 'TXN-8011', loanId: 'LN-APP-2026-05327', name: 'Loan Disbursed', type: 'CREDIT', amount: 800000, date: '20 Jul 2026', status: 'SUCCESS' },
-  { id: 'TXN-8010', loanId: 'LN-APP-2026-05327', name: 'Processing Fee', type: 'DEBIT', amount: 2500, date: '18 Jul 2026', status: 'SUCCESS' },
-  { id: 'TXN-7911', loanId: 'LN-APP-2026-27758', name: 'Vehicle Loan Disbursed', type: 'CREDIT', amount: 1040800, date: '18 Jun 2026', status: 'SUCCESS' },
-];
+function getStorageInfo() {
+  const session = JSON.parse(localStorage.getItem('lms_session') || '{}');
+  const userKey = session.email ? `_${session.email.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+  const isDemoUser = session.email === 'borrower@loanvault.com' || !session.email;
+  return {
+    loansKey: `lms_borrower_loans_v2${userKey}`,
+    txnsKey: `lms_borrower_txns_v2${userKey}`,
+    isDemoUser,
+  };
+}
 
 export const loanStore = {
   getLoans: () => {
+    const { loansKey, isDemoUser } = getStorageInfo();
     try {
-      const stored = localStorage.getItem(STORAGE_KEY_LOANS);
+      const stored = localStorage.getItem(loansKey);
       if (stored) {
         return JSON.parse(stored);
       }
     } catch (e) {
       console.warn('Failed to parse stored loans', e);
     }
-    localStorage.setItem(STORAGE_KEY_LOANS, JSON.stringify(DEFAULT_LOANS));
-    return DEFAULT_LOANS;
+    const defaultData = isDemoUser ? DEFAULT_LOANS : [];
+    localStorage.setItem(loansKey, JSON.stringify(defaultData));
+    return defaultData;
   },
 
   getTransactions: () => {
+    const { txnsKey, isDemoUser } = getStorageInfo();
     try {
-      const stored = localStorage.getItem(STORAGE_KEY_TXNS);
+      const stored = localStorage.getItem(txnsKey);
       if (stored) {
         return JSON.parse(stored);
       }
     } catch (e) {
       console.warn('Failed to parse stored txns', e);
     }
-    localStorage.setItem(STORAGE_KEY_TXNS, JSON.stringify(DEFAULT_TXNS));
-    return DEFAULT_TXNS;
+    const defaultData = isDemoUser ? DEFAULT_TXNS : [];
+    localStorage.setItem(txnsKey, JSON.stringify(defaultData));
+    return defaultData;
   },
 
   payEmi: (loanId) => {
@@ -150,14 +104,18 @@ export const loanStore = {
       return loan;
     });
 
-    localStorage.setItem(STORAGE_KEY_LOANS, JSON.stringify(updatedLoans));
-    localStorage.setItem(STORAGE_KEY_TXNS, JSON.stringify(txns));
+    const { loansKey, txnsKey } = getStorageInfo();
+    localStorage.setItem(loansKey, JSON.stringify(updatedLoans));
+    localStorage.setItem(txnsKey, JSON.stringify(txns));
     return { loans: updatedLoans, txns };
   },
 
   resetStore: () => {
-    localStorage.setItem(STORAGE_KEY_LOANS, JSON.stringify(DEFAULT_LOANS));
-    localStorage.setItem(STORAGE_KEY_TXNS, JSON.stringify(DEFAULT_TXNS));
-    return { loans: DEFAULT_LOANS, txns: DEFAULT_TXNS };
+    const { loansKey, txnsKey, isDemoUser } = getStorageInfo();
+    const defaultData = isDemoUser ? DEFAULT_LOANS : [];
+    const defaultTxns = isDemoUser ? DEFAULT_TXNS : [];
+    localStorage.setItem(loansKey, JSON.stringify(defaultData));
+    localStorage.setItem(txnsKey, JSON.stringify(defaultTxns));
+    return { loans: defaultData, txns: defaultTxns };
   }
 };
