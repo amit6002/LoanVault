@@ -208,6 +208,7 @@ export default function LoanApplicationPage() {
         employmentType: formData.employmentType,
         employerName: formData.employer,
         monthlyIncome: formData.income,
+        servicingBranchCode: 'MUM-01',
       };
 
       await api.post('/api/applications', payload);

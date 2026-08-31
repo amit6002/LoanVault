@@ -104,7 +104,17 @@ public class LoanApplicationController {
 
         if (servicingBranch == null) {
             servicingBranch = branchRepository.findByActiveTrue().stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("No active servicing branch found in system."));
+                .orElseGet(() -> {
+                    Branch defaultBranch = Branch.builder()
+                        .code("MUM-01")
+                        .name("Mumbai Central Branch")
+                        .city("Mumbai")
+                        .state("Maharashtra")
+                        .pincode("400001")
+                        .active(true)
+                        .build();
+                    return branchRepository.save(defaultBranch);
+                });
         }
 
         // Perform Automatic Dynamic Round-Robin Loan Officer Assignment
