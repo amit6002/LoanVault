@@ -101,10 +101,31 @@ export const loanStore = {
 
     const updatedLoans = loans.map(loan => {
       if (loan.id === loanId && !loan.paidThisMonth && loan.status === 'ACTIVE') {
-        const newOutstanding = Math.max(0, loan.outstandingPrincipal - loan.emiAmount);
-        const newPaidMonths = loan.paidMonths + 1;
+        // Only deduct the principal component (not interest) from outstanding balance
+        // If principalComponent is stored, use it; otherwise compute ~70% of EMI as principal
+        const principalDeducted = loan.principalComponent > 0
+          ? loan.principalComponent
+          : Math.round(loan.emiAmount * 0.7 * 100) / 100;
 
-        // Log transaction
+        const newOutstanding = Math.max(0, loan.outstandingPrincipal - principalDeducted);
+        const newPaidMonths = loan.paidMonths + 1;
+        const remainingEmis = loan.tenureMonths - newPaidMonths;
+
+        // Advance the next EMI due date by one month
+        const currentDueDate = loan.nextEmiDate && loan.nextEmiDate !== '-'
+          ? new Date(loan.nextEmiDate)
+          : new Date();
+        const nextDue = new Date(currentDueDate);
+        nextDue.setMonth(nextDue.getMonth() + 1);
+        const nextEmiDateStr = nextDue.toISOString().split('T')[0];
+        const nextDueDateLabel = nextDue.toLocaleDateString('en-IN', {
+          day: '2-digit', month: 'short', year: 'numeric'
+        });
+
+        // Determine if the loan is now fully repaid
+        const isFullyRepaid = newOutstanding === 0 || remainingEmis <= 0;
+
+        // Log the EMI payment transaction
         const newTxn = {
           id: `TXN-${Math.floor(1000 + Math.random() * 9000)}`,
           loanId: loan.id,
@@ -120,7 +141,10 @@ export const loanStore = {
           ...loan,
           outstandingPrincipal: newOutstanding,
           paidMonths: newPaidMonths,
-          paidThisMonth: true,
+          paidThisMonth: true,                // reset each month — see comment below
+          nextEmiDate: isFullyRepaid ? '-' : nextEmiDateStr,
+          dueDateLabel: isFullyRepaid ? '-' : nextDueDateLabel,
+          status: isFullyRepaid ? 'CLOSED' : 'ACTIVE',
         };
       }
       return loan;

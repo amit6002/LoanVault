@@ -61,18 +61,14 @@ export default function MyLoansPage() {
     setLoans(updatedLoans);
     setTransactions(updatedTxns);
 
+    // Sync modal with the freshly-updated loan data from the store
     const paidLoan = updatedLoans.find((l) => l.id === loanId);
-    if (selectedLoanModal && selectedLoanModal.id === loanId) {
-      setSelectedLoanModal({
-        ...selectedLoanModal,
-        paidThisMonth: true,
-        outstandingPrincipal: Math.max(0, selectedLoanModal.outstandingPrincipal - (selectedLoanModal.emiAmount * 0.7)),
-        paidMonths: selectedLoanModal.paidMonths + 1,
-      });
+    if (selectedLoanModal && selectedLoanModal.id === loanId && paidLoan) {
+      setSelectedLoanModal(paidLoan);
     }
 
     setPaymentMsg(
-      `EMI Payment of ${formatCurrency(paidLoan.emiAmount)} for ${paidLoan.name} processed successfully! Balance updated.`
+      `EMI Payment of ${formatCurrency(paidLoan.emiAmount)} for ${paidLoan.name} processed successfully! Next due: ${paidLoan.dueDateLabel}.`
     );
     setTimeout(() => setPaymentMsg(''), 5000);
   };
@@ -390,50 +386,76 @@ export default function MyLoansPage() {
             )}
 
             {/* TAB 2: EMI SCHEDULE */}
-            {detailTab === 'EMI Schedule' && (
-              <div className="space-y-4 text-xs">
-                <div className="overflow-x-auto border border-slate-200 rounded-2xl bg-white shadow-xs no-scrollbar">
-                  <table className="min-w-full divide-y divide-slate-200">
-                    <thead className="bg-slate-50">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-slate-500 font-bold uppercase text-[10px]">
-                          Installment
-                        </th>
-                        <th className="px-4 py-3 text-left text-slate-500 font-bold uppercase text-[10px]">
-                          Due Date
-                        </th>
-                        <th className="px-4 py-3 text-right text-slate-500 font-bold uppercase text-[10px]">
-                          EMI Amount
-                        </th>
-                        <th className="px-4 py-3 text-center text-slate-500 font-bold uppercase text-[10px]">
-                          Status
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200 text-slate-800">
-                      <tr>
-                        <td className="px-4 py-3 font-bold">1</td>
-                        <td className="px-4 py-3">{selectedLoanModal.dueDateLabel}</td>
-                        <td className="px-4 py-3 text-right font-mono font-bold">
-                          {formatCurrency(selectedLoanModal.emiAmount)}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span
-                            className={`text-[10px] px-2.5 py-1 rounded-full font-bold ${
-                              selectedLoanModal.paidThisMonth
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                : 'bg-amber-50 text-amber-700 border border-amber-200'
-                            }`}
-                          >
-                            {selectedLoanModal.paidThisMonth ? 'Paid' : 'Upcoming'}
-                          </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+            {detailTab === 'EMI Schedule' && (() => {
+              // Build a full amortization schedule from loan data
+              const loan = selectedLoanModal;
+              const totalEmis = loan.tenureMonths || 0;
+              const paidCount = loan.paidMonths || 0;
+
+              // Base date: work backward from current nextEmiDate by (remaining count) months
+              // OR forward from disbursement date if available
+              const baseDateStr = loan.nextEmiDate && loan.nextEmiDate !== '-'
+                ? loan.nextEmiDate
+                : null;
+
+              const getEmiDate = (installmentIndex) => {
+                // installmentIndex: 0-based from the first EMI
+                if (baseDateStr) {
+                  const base = new Date(baseDateStr);
+                  // nextEmiDate is the date for installment (paidCount + 1)
+                  // so installment i date = base + (i - paidCount) months
+                  const d = new Date(base);
+                  d.setMonth(d.getMonth() + (installmentIndex - paidCount));
+                  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                }
+                return `Month ${installmentIndex + 1}`;
+              };
+
+              return (
+                <div className="space-y-4 text-xs">
+                  <div className="overflow-x-auto border border-slate-200 rounded-2xl bg-white shadow-xs no-scrollbar max-h-96 overflow-y-auto no-scrollbar">
+                    <table className="min-w-full divide-y divide-slate-200">
+                      <thead className="bg-slate-50 sticky top-0 z-10">
+                        <tr>
+                          <th className="px-4 py-3 text-left text-slate-500 font-bold uppercase text-[10px]">Installment</th>
+                          <th className="px-4 py-3 text-left text-slate-500 font-bold uppercase text-[10px]">Due Date</th>
+                          <th className="px-4 py-3 text-right text-slate-500 font-bold uppercase text-[10px]">EMI Amount</th>
+                          <th className="px-4 py-3 text-center text-slate-500 font-bold uppercase text-[10px]">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-200 text-slate-800">
+                        {Array.from({ length: totalEmis }, (_, i) => {
+                          const isPaid = i < paidCount;
+                          const isCurrent = i === paidCount && !loan.paidThisMonth;
+                          const isJustPaid = i === paidCount - 1 && loan.paidThisMonth;
+                          return (
+                            <tr key={i} className={isPaid ? 'bg-emerald-50/40' : isCurrent ? 'bg-indigo-50/40' : ''}>
+                              <td className="px-4 py-3 font-bold">{i + 1}</td>
+                              <td className="px-4 py-3 text-slate-600">{getEmiDate(i)}</td>
+                              <td className="px-4 py-3 text-right font-mono font-bold">{formatCurrency(loan.emiAmount)}</td>
+                              <td className="px-4 py-3 text-center">
+                                <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold ${
+                                  isPaid
+                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    : isCurrent
+                                    ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                    : 'bg-slate-50 text-slate-500 border border-slate-200'
+                                }`}>
+                                  {isPaid ? 'Paid ✓' : isCurrent ? 'Due Now' : 'Upcoming'}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-[10px] text-slate-400 text-right font-mono">
+                    {paidCount} of {totalEmis} installments completed • Outstanding: {formatCurrency(loan.outstandingPrincipal, false)}
+                  </p>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* TAB 3: TRANSACTIONS */}
             {detailTab === 'Transactions' && (
