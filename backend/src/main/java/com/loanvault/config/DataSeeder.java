@@ -30,13 +30,14 @@ public class DataSeeder implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final LoanApplicationRepository applicationRepository;
+    private final com.loanvault.repository.BranchRepository branchRepository;
     private final PasswordEncoder passwordEncoder;
     private final JdbcTemplate jdbcTemplate;
 
     @Override
     public void run(String... args) throws Exception {
         migrateDatabaseSchema();
-        seedUsers();
+        seedBranchesAndUsers();
         seedApplications();
     }
 
@@ -65,8 +66,47 @@ public class DataSeeder implements CommandLineRunner {
         }
     }
 
-    private void seedUsers() {
-        // 1. System Admin Account
+    private void seedBranchesAndUsers() {
+        // 1. Seed Servicing Branches if none exist
+        com.loanvault.entity.Branch mumbaiBranch = branchRepository.findByCode("MUM-01").orElse(null);
+        if (mumbaiBranch == null) {
+            mumbaiBranch = com.loanvault.entity.Branch.builder()
+                .code("MUM-01")
+                .name("Mumbai Central Branch")
+                .city("Mumbai")
+                .state("Maharashtra")
+                .pincode("400001")
+                .active(true)
+                .build();
+            mumbaiBranch = branchRepository.save(mumbaiBranch);
+            log.info("Seeded Branch: MUM-01 (Mumbai Central Branch)");
+        }
+
+        if (!branchRepository.findByCode("DEL-01").isPresent()) {
+            branchRepository.save(com.loanvault.entity.Branch.builder()
+                .code("DEL-01")
+                .name("Delhi Regional Branch")
+                .city("New Delhi")
+                .state("Delhi")
+                .pincode("110001")
+                .active(true)
+                .build());
+            log.info("Seeded Branch: DEL-01 (Delhi Regional Branch)");
+        }
+
+        if (!branchRepository.findByCode("BLR-01").isPresent()) {
+            branchRepository.save(com.loanvault.entity.Branch.builder()
+                .code("BLR-01")
+                .name("Bengaluru Tech Hub Branch")
+                .city("Bengaluru")
+                .state("Karnataka")
+                .pincode("560001")
+                .active(true)
+                .build());
+            log.info("Seeded Branch: BLR-01 (Bengaluru Tech Hub Branch)");
+        }
+
+        // 2. System Admin Account
         if (!userRepository.existsByEmail("admin@loanvault.com")) {
             User admin = User.builder()
                 .name("System Admin")
@@ -77,15 +117,17 @@ public class DataSeeder implements CommandLineRunner {
                 .enabled(true)
                 .kycVerified(true)
                 .branch("MUMBAI")
+                .servicingBranch(mumbaiBranch)
                 .profileCompleted(true)
                 .build();
             userRepository.save(admin);
             log.info("Seeded Demo Admin User: admin@loanvault.com");
         }
 
-        // 2. Loan Manager Account
-        if (!userRepository.existsByEmail("manager@loanvault.com")) {
-            User manager = User.builder()
+        // 3. Loan Manager Account
+        User manager = userRepository.findByEmail("manager@loanvault.com").orElse(null);
+        if (manager == null) {
+            manager = User.builder()
                 .name("Vikram Malhotra (Branch Manager)")
                 .email("manager@loanvault.com")
                 .password(passwordEncoder.encode("Manager@1234"))
@@ -94,15 +136,26 @@ public class DataSeeder implements CommandLineRunner {
                 .enabled(true)
                 .kycVerified(true)
                 .branch("MUMBAI")
+                .servicingBranch(mumbaiBranch)
                 .profileCompleted(true)
                 .build();
-            userRepository.save(manager);
+            manager = userRepository.save(manager);
             log.info("Seeded Demo Manager User: manager@loanvault.com");
+        } else if (manager.getServicingBranch() == null) {
+            manager.setServicingBranch(mumbaiBranch);
+            userRepository.save(manager);
         }
 
-        // 3. Loan Officer Account
-        if (!userRepository.existsByEmail("officer@loanvault.com")) {
-            User officer = User.builder()
+        // Assign manager to Mumbai branch if null
+        if (mumbaiBranch.getManager() == null) {
+            mumbaiBranch.setManager(manager);
+            branchRepository.save(mumbaiBranch);
+        }
+
+        // 4. Loan Officer Account
+        User officer = userRepository.findByEmail("officer@loanvault.com").orElse(null);
+        if (officer == null) {
+            officer = User.builder()
                 .name("Pooja Verma (Loan Officer)")
                 .email("officer@loanvault.com")
                 .password(passwordEncoder.encode("Officer@1234"))
@@ -111,15 +164,22 @@ public class DataSeeder implements CommandLineRunner {
                 .enabled(true)
                 .kycVerified(true)
                 .branch("MUMBAI")
+                .servicingBranch(mumbaiBranch)
+                .active(true)
+                .onLeave(false)
                 .profileCompleted(true)
                 .build();
             userRepository.save(officer);
             log.info("Seeded Demo Officer User: officer@loanvault.com");
+        } else if (officer.getServicingBranch() == null) {
+            officer.setServicingBranch(mumbaiBranch);
+            userRepository.save(officer);
         }
 
-        // 4. Demo Borrower Account
-        if (!userRepository.existsByEmail("borrower@loanvault.com")) {
-            User borrower = User.builder()
+        // 5. Demo Borrower Account
+        User borrower = userRepository.findByEmail("borrower@loanvault.com").orElse(null);
+        if (borrower == null) {
+            borrower = User.builder()
                 .name("Rahul Sharma (Demo Borrower)")
                 .email("borrower@loanvault.com")
                 .password(passwordEncoder.encode("Borrower@1234"))
@@ -128,6 +188,7 @@ public class DataSeeder implements CommandLineRunner {
                 .enabled(true)
                 .kycVerified(true)
                 .branch("MUMBAI")
+                .servicingBranch(mumbaiBranch)
                 .panNumber("ABCDE1234F")
                 .aadhaarNumber("123456789012")
                 .employmentType("SALARIED")
@@ -137,6 +198,9 @@ public class DataSeeder implements CommandLineRunner {
                 .build();
             userRepository.save(borrower);
             log.info("Seeded Demo Borrower User: borrower@loanvault.com");
+        } else if (borrower.getServicingBranch() == null) {
+            borrower.setServicingBranch(mumbaiBranch);
+            userRepository.save(borrower);
         }
     }
 
