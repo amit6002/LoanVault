@@ -18,6 +18,64 @@ function getStorageInfo() {
   };
 }
 
+const DEFAULT_LOANS = [
+  {
+    id: 'LN-APP-2026-05327',
+    name: 'Business Loan',
+    status: 'ACTIVE',
+    sanctionedAmount: 800000,
+    outstandingPrincipal: 200000,
+    interestRate: 12.0,
+    tenureMonths: 24,
+    paidMonths: 12,
+    emiAmount: 9414.69,
+    principalComponent: 8534.10,
+    interestComponent: 880.59,
+    nextEmiDate: '2026-08-05',
+    dueDateLabel: '05 Aug 2026',
+    paidThisMonth: false,
+  },
+  {
+    id: 'LN-APP-2026-27758',
+    name: 'Vehicle Loan',
+    status: 'ACTIVE',
+    sanctionedAmount: 1040800,
+    outstandingPrincipal: 1040800,
+    interestRate: 9.25,
+    tenureMonths: 60,
+    paidMonths: 0,
+    emiAmount: 9249.71,
+    principalComponent: 8350.00,
+    interestComponent: 899.71,
+    nextEmiDate: '2026-08-10',
+    dueDateLabel: '10 Aug 2026',
+    paidThisMonth: false,
+  },
+  {
+    id: 'LN-APP-2026-00812',
+    name: 'Home Loan',
+    status: 'SUBMITTED',
+    sanctionedAmount: 5500000,
+    outstandingPrincipal: 0,
+    interestRate: 8.4,
+    tenureMonths: 240,
+    paidMonths: 0,
+    emiAmount: 0,
+    principalComponent: 0,
+    interestComponent: 0,
+    nextEmiDate: '-',
+    dueDateLabel: '-',
+    paidThisMonth: false,
+  }
+];
+
+const DEFAULT_TXNS = [
+  { id: 'TXN-8012', loanId: 'LN-APP-2026-05327', name: 'EMI Payment', type: 'DEBIT', amount: 9414.69, date: '05 Jul 2026', status: 'SUCCESS' },
+  { id: 'TXN-8011', loanId: 'LN-APP-2026-05327', name: 'Loan Disbursed', type: 'CREDIT', amount: 800000, date: '20 Jul 2026', status: 'SUCCESS' },
+  { id: 'TXN-8010', loanId: 'LN-APP-2026-05327', name: 'Processing Fee', type: 'DEBIT', amount: 2500, date: '18 Jul 2026', status: 'SUCCESS' },
+  { id: 'TXN-7911', loanId: 'LN-APP-2026-27758', name: 'Vehicle Loan Disbursed', type: 'CREDIT', amount: 1040800, date: '18 Jun 2026', status: 'SUCCESS' },
+];
+
 export const loanStore = {
   getLoans: () => {
     const { loansKey, isDemoUser } = getStorageInfo();
